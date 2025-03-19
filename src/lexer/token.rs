@@ -29,6 +29,9 @@ pub enum TokenKind {
     Integer(i64),
     Float(f64),
 
+    True,
+    False,
+
     Let,
     Function,
     Return,
@@ -48,6 +51,8 @@ impl TokenKind {
             "return" => TokenKind::Return,
             "if" => TokenKind::If,
             "else" => TokenKind::Else,
+            "true" => TokenKind::True,
+            "false" => TokenKind::False,
 
             _ => TokenKind::Identifier(string),
         }

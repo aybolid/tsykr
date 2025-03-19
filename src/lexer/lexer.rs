@@ -167,8 +167,8 @@ impl Iterator for Lexer {
                 }
             }
 
-            _ if self.current_is_alphabetic() => self.read_alphabetic_token(),
-            _ if self.current_is_numeric() => self.read_numeric_token(),
+            _ if self.current_is_alphabetic() => return Some(self.read_alphabetic_token()),
+            _ if self.current_is_numeric() => return Some(self.read_numeric_token()),
 
             c => TokenKind::ILLEGAL(c),
         };
@@ -181,6 +181,40 @@ impl Iterator for Lexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_smth_that_makes_sense() {
+        let input = String::from("if (true) { return 2 + 2; } else { return 3.25 - 0.25; }");
+        let mut lexer = Lexer::new(input);
+        assert_eq!(lexer.next(), Some(TokenKind::If));
+        assert_eq!(lexer.next(), Some(TokenKind::LeftParen));
+        assert_eq!(lexer.next(), Some(TokenKind::True));
+        assert_eq!(lexer.next(), Some(TokenKind::RightParen));
+        assert_eq!(lexer.next(), Some(TokenKind::LeftCurly));
+        assert_eq!(lexer.next(), Some(TokenKind::Return));
+        assert_eq!(lexer.next(), Some(TokenKind::Integer(2)));
+        assert_eq!(lexer.next(), Some(TokenKind::Plus));
+        assert_eq!(lexer.next(), Some(TokenKind::Integer(2)));
+        assert_eq!(lexer.next(), Some(TokenKind::SemiColon));
+        assert_eq!(lexer.next(), Some(TokenKind::RightCurly));
+        assert_eq!(lexer.next(), Some(TokenKind::Else));
+        assert_eq!(lexer.next(), Some(TokenKind::LeftCurly));
+        assert_eq!(lexer.next(), Some(TokenKind::Return));
+        assert_eq!(lexer.next(), Some(TokenKind::Float(3.25)));
+        assert_eq!(lexer.next(), Some(TokenKind::Minus));
+        assert_eq!(lexer.next(), Some(TokenKind::Float(0.25)));
+        assert_eq!(lexer.next(), Some(TokenKind::SemiColon));
+        assert_eq!(lexer.next(), Some(TokenKind::RightCurly));
+    }
+
+    #[test]
+    fn test_boolean_tokens() {
+        let input = String::from("true false");
+        let mut lexer = Lexer::new(input);
+        assert_eq!(lexer.next(), Some(TokenKind::True));
+        assert_eq!(lexer.next(), Some(TokenKind::False));
+        assert_eq!(lexer.next(), None);
+    }
 
     #[test]
     fn test_numeric_tokens() {
