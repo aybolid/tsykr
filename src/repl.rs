@@ -10,7 +10,7 @@ pub fn run() -> Result<(), std::io::Error> {
     let mut stdout = std::io::stdout();
 
     loop {
-        println!("{PROMPT}");
+        print!("{PROMPT}");
         stdout.flush()?;
         let mut buf = String::new();
         stdin.read_line(&mut buf)?;
