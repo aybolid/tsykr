@@ -26,6 +26,8 @@ pub enum TokenKind {
     LessThanEquals,
 
     Identifier(String),
+    Integer(i64),
+    Float(f64),
 
     Let,
     Function,

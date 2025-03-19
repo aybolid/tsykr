@@ -70,10 +70,37 @@ impl Lexer {
         TokenKind::new_alphabetic(buf)
     }
 
+    fn read_numeric_token(&mut self) -> TokenKind {
+        let start_token = self.current_ch.unwrap();
+        let mut buf = String::new();
+        buf.push(start_token);
+
+        self.read_char(); // consume start token
+
+        while self.current_is_numeric() || self.current_ch == Some('.') {
+            buf.push(self.current_ch.unwrap());
+            self.read_char();
+        }
+
+        if buf.contains('.') {
+            TokenKind::Float(buf.parse().unwrap())
+        } else {
+            TokenKind::Integer(buf.parse().unwrap())
+        }
+    }
+
     /// Checks if the current character is an alphabetic character or an underscore.
     fn current_is_alphabetic(&self) -> bool {
         match self.current_ch {
             Some(c) => c.is_alphabetic() || c == '_',
+            None => false,
+        }
+    }
+
+    /// Checks if the current character is a numeric character.
+    fn current_is_numeric(&self) -> bool {
+        match self.current_ch {
+            Some(c) => c.is_numeric(),
             None => false,
         }
     }
@@ -141,6 +168,7 @@ impl Iterator for Lexer {
             }
 
             _ if self.current_is_alphabetic() => self.read_alphabetic_token(),
+            _ if self.current_is_numeric() => self.read_numeric_token(),
 
             c => TokenKind::ILLEGAL(c),
         };
@@ -153,6 +181,19 @@ impl Iterator for Lexer {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_numeric_tokens() {
+        let input = String::from("123 456.789 -123 -23.23");
+        let mut lexer = Lexer::new(input);
+        assert_eq!(lexer.next(), Some(TokenKind::Integer(123)));
+        assert_eq!(lexer.next(), Some(TokenKind::Float(456.789)));
+        assert_eq!(lexer.next(), Some(TokenKind::Minus));
+        assert_eq!(lexer.next(), Some(TokenKind::Integer(123)));
+        assert_eq!(lexer.next(), Some(TokenKind::Minus));
+        assert_eq!(lexer.next(), Some(TokenKind::Float(23.23)));
+        assert_eq!(lexer.next(), None);
+    }
 
     #[test]
     fn test_punctuation_tokens() {
