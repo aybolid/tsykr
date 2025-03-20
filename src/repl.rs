@@ -9,6 +9,8 @@ pub fn run() -> Result<(), std::io::Error> {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
 
+    println!("Starting the tsykr REPL...");
+
     loop {
         print!("{PROMPT}");
         stdout.flush()?;
@@ -17,7 +19,8 @@ pub fn run() -> Result<(), std::io::Error> {
 
         let lexer = Lexer::new(buf);
         for token in lexer {
-            println!("{token:?}");
+            print!("{token:?} ");
         }
+        println!()
     }
 }
