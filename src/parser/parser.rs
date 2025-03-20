@@ -71,14 +71,17 @@ impl Parser {
         self.current_token = self.lexer.next();
     }
 
-    /// Returns the next token if it matches the predicate, otherwise returns an error.
-    /// Calling this function will advance the lexer to the next token.
-    fn expect_peek_token<F>(&mut self, predicate: F) -> Result<Token, ParserError>
+    /// Sets parser.current_token to the next token if it matches the predicate, otherwise returns an error.
+    /// Advances the lexer to the next token.
+    fn expect_next_token<F>(&mut self, predicate: F) -> Result<(), ParserError>
     where
         F: Fn(&Token) -> bool,
     {
         match self.lexer.next() {
-            Some(token) if predicate(&token) => Ok(token),
+            Some(token) if predicate(&token) => {
+                self.current_token = Some(token);
+                Ok(())
+            }
             Some(token) => Err(ParserError::UnexpectedToken(token)),
             None => Err(ParserError::UnexpectedEndOfInput),
         }
@@ -109,6 +112,32 @@ mod tests {
         assert_eq!(parser.current_token, Some(Token::Equals));
         parser.next_token();
         assert_eq!(parser.current_token, Some(Token::Integer(5)));
+        parser.next_token();
+        assert_eq!(parser.current_token, None);
+    }
+
+    #[test]
+    fn test_expect_next_token() {
+        let lexer = Lexer::new("let x = 5".to_string());
+        let mut parser = Parser::new(lexer);
+        parser
+            .expect_next_token(|token| token == &Token::Identifier("x".to_string()))
+            .unwrap();
+        assert_eq!(
+            parser.current_token,
+            Some(Token::Identifier("x".to_string()))
+        );
+        parser
+            .expect_next_token(|token| token == &Token::Equals)
+            .unwrap();
+        assert_eq!(parser.current_token, Some(Token::Equals));
+        parser
+            .expect_next_token(|token| token == &Token::Integer(5))
+            .unwrap();
+        assert_eq!(parser.current_token, Some(Token::Integer(5)));
+        if let Ok(()) = parser.expect_next_token(|token| token == &Token::Integer(5)) {
+            panic!("expect_next_token should fail at this point");
+        }
     }
 
     #[test]
