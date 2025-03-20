@@ -16,6 +16,8 @@ where
     Self: Debug,
 {
     /// Returns a token literal for the node.
+    #[allow(unused)]
     fn token_literal(&self) -> &str;
+    #[allow(unused)]
     fn as_any(&self) -> &dyn std::any::Any;
 }
