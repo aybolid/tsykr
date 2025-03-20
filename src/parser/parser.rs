@@ -27,18 +27,33 @@ impl Parser {
         parser
     }
 
-    pub fn parse(&mut self) -> Result<Program, ParserError> {
+    pub fn parse(&mut self) -> Result<Program, Vec<ParserError>> {
         let mut program = Program::new();
 
+        let mut errors = vec![];
+
         while self.current_token.is_some() {
-            let stmt = self.parse_statement()?;
+            let stmt = match self.parse_statement() {
+                Ok(stmt) => stmt,
+                Err(err) => {
+                    errors.push(err);
+                    self.next_token();
+                    continue;
+                }
+            };
             program.push_statement(stmt);
             self.next_token();
+        }
+
+        if !errors.is_empty() {
+            return Err(errors);
         }
 
         Ok(program)
     }
 
+    /// Parses a statement starting from the current token.
+    /// Calling this function takes the current token.
     fn parse_statement(&mut self) -> Result<Box<dyn Node>, ParserError> {
         if let Some(token) = self.current_token.take() {
             match token {
@@ -50,16 +65,20 @@ impl Parser {
         }
     }
 
+    /// Populates the current token with the next token from the lexer.
+    /// Advances the lexer to the next token.
     fn next_token(&mut self) {
         self.current_token = self.lexer.next();
     }
 
-    fn expect_peek_token<F>(&mut self, predicate: F) -> Result<(), ParserError>
+    /// Returns the next token if it matches the predicate, otherwise returns an error.
+    /// Calling this function will advance the lexer to the next token.
+    fn expect_peek_token<F>(&mut self, predicate: F) -> Result<Token, ParserError>
     where
         F: Fn(&Token) -> bool,
     {
         match self.lexer.next() {
-            Some(token) if predicate(&token) => Ok(()),
+            Some(token) if predicate(&token) => Ok(token),
             Some(token) => Err(ParserError::UnexpectedToken(token)),
             None => Err(ParserError::UnexpectedEndOfInput),
         }
@@ -97,14 +116,14 @@ mod tests {
         let lexer = Lexer::new("name variable".to_string());
         let mut parser = Parser::new(lexer);
         let stmt = parser.parse_statement().unwrap();
-        require_identifier(stmt, "name");
+        assert_identifier(stmt, "name");
         parser.next_token();
         let stmt = parser.parse_statement().unwrap();
-        require_identifier(stmt, "variable");
+        assert_identifier(stmt, "variable");
     }
 
-    fn require_identifier(ident_node: Box<dyn Node>, expected: &str) {
-        if let Some(ident) = ident_node.as_any().downcast_ref::<Identifier>() {
+    fn assert_identifier(node: Box<dyn Node>, expected: &str) {
+        if let Some(ident) = node.as_any().downcast_ref::<Identifier>() {
             assert_eq!(ident.token, Token::Identifier(expected.to_string()));
         } else {
             panic!("expected Identifier node");

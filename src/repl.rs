@@ -22,7 +22,12 @@ pub fn run() {
 
         match parser.parse() {
             Ok(program) => println!("{program:?}"),
-            Err(err) => eprintln!("Error: {err}"),
+            Err(errs) => {
+                println!("Parser errors:");
+                for err in errs {
+                    eprintln!("\t{err}");
+                }
+            }
         }
     }
 }
