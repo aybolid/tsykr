@@ -246,6 +246,61 @@ mod tests {
         assert_return_statement(stmt);
     }
 
+    #[test]
+    fn test_parser_errors() {
+        let lexer = Lexer::new("№".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::UnexpectedToken(Token::ILLEGAL('№')))
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::UnexpectedEndOfInput)
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let 13".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::UnexpectedToken(Token::Integer(13)))
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let what".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::WhyNothingIfIWantThis(Token::Equals))
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let what 13".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(
+                    errors[0],
+                    ParserError::IWantThisNotThat {
+                        wanted: Token::Equals,
+                        found: Token::Integer(13)
+                    }
+                )
+            }
+            _ => panic!("expected to fail"),
+        };
+    }
+
     fn assert_identifier(node: Box<dyn Node>, expected: &str) {
         if let Some(ident) = node.as_any().downcast_ref::<Identifier>() {
             assert_eq!(ident.token, Token::Identifier(expected.to_string()));
