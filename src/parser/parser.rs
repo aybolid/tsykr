@@ -10,6 +10,8 @@ pub enum ParserError {
     UnexpectedToken(Token),
     #[error("Unexpected token: wanted {wanted:?} but found {found:?}")]
     IWantThisNotThat { wanted: Token, found: Token },
+    #[error("Unexpected end of input but wanted {0:?}")]
+    WhyNothingIfIWantThis(Token),
     #[error("Unexpected end of input")]
     UnexpectedEndOfInput,
 }
@@ -138,7 +140,7 @@ impl Parser {
                 wanted: expected_token,
                 found: token,
             }),
-            None => Err(ParserError::UnexpectedEndOfInput),
+            None => Err(ParserError::WhyNothingIfIWantThis(expected_token)),
         }
     }
 
