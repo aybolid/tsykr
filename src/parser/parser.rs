@@ -67,6 +67,7 @@ impl Parser {
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement(token)?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement(token)?)),
+                Token::ILLEGAL(_) => Err(ParserError::IDontWantThis(token)),
                 other_token => Ok(Box::new(self.parse_expression_statement(other_token)?)),
             }
         } else {
