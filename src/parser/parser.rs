@@ -6,16 +6,19 @@ use super::{
     Expression, ExpressionStatement, Identifier, LetStatement, Program, ReturnStatement, Statement,
 };
 
+type PrefixParseFunction = fn() -> dyn Expression;
+type InfixParseFunction = fn(dyn Expression) -> dyn Expression;
+
 #[derive(Debug, PartialEq, Error)]
 pub enum ParserError {
     #[error("Unexpected token: {0:?}")]
-    UnexpectedToken(Token),
-    #[error("Unexpected token: wanted {wanted:?} but found {found:?}")]
-    IWantThisNotThat { wanted: Token, found: Token },
+    IDontWantThis(Token),
+    #[error("Unexpected token: wanted {expected:?} but found {actual:?}")]
+    IWantThisNotThat { expected: Token, actual: Token },
     #[error("Unexpected end of input but wanted {0:?}")]
     WhyNothingIfIWantThis(Token),
     #[error("Unexpected end of input")]
-    UnexpectedEndOfInput,
+    WhereIsEverybody,
 }
 
 pub struct Parser {
@@ -29,6 +32,7 @@ impl Parser {
             lexer,
             current_token: None,
         };
+
         parser.next_token();
         parser
     }
@@ -76,6 +80,7 @@ impl Parser {
         todo!()
     }
 
+    /// Parses an expression statement
     fn parse_expression_statement(
         &mut self,
         trigger_token: Token,
@@ -94,8 +99,8 @@ impl Parser {
     ) -> Result<ReturnStatement, ParserError> {
         if trigger_token != Token::Return {
             return Err(ParserError::IWantThisNotThat {
-                wanted: Token::Return,
-                found: trigger_token,
+                expected: Token::Return,
+                actual: trigger_token,
             });
         }
 
@@ -114,8 +119,8 @@ impl Parser {
     fn parse_let_statement(&mut self, trigger_token: Token) -> Result<LetStatement, ParserError> {
         if trigger_token != Token::Let {
             return Err(ParserError::IWantThisNotThat {
-                wanted: Token::Let,
-                found: trigger_token,
+                expected: Token::Let,
+                actual: trigger_token,
             });
         }
 
@@ -152,8 +157,8 @@ impl Parser {
                 Ok(())
             }
             Some(token) => Err(ParserError::IWantThisNotThat {
-                wanted: expected_token,
-                found: token,
+                expected: expected_token,
+                actual: token,
             }),
             None => Err(ParserError::WhyNothingIfIWantThis(expected_token)),
         }
@@ -172,8 +177,8 @@ impl Parser {
                 self.current_token = Some(token);
                 Ok(())
             }
-            Some(token) => Err(ParserError::UnexpectedToken(token)),
-            None => Err(ParserError::UnexpectedEndOfInput),
+            Some(token) => Err(ParserError::IDontWantThis(token)),
+            None => Err(ParserError::WhereIsEverybody),
         }
     }
 }
@@ -270,7 +275,7 @@ mod tests {
         match parser.parse() {
             Err(errors) => {
                 assert_eq!(errors.len(), 1);
-                assert_eq!(errors[0], ParserError::UnexpectedToken(Token::ILLEGAL('№')))
+                assert_eq!(errors[0], ParserError::IDontWantThis(Token::ILLEGAL('№')))
             }
             _ => panic!("expected to fail"),
         };
@@ -279,7 +284,7 @@ mod tests {
         match parser.parse() {
             Err(errors) => {
                 assert_eq!(errors.len(), 1);
-                assert_eq!(errors[0], ParserError::UnexpectedEndOfInput)
+                assert_eq!(errors[0], ParserError::WhereIsEverybody)
             }
             _ => panic!("expected to fail"),
         };
@@ -288,7 +293,7 @@ mod tests {
         match parser.parse() {
             Err(errors) => {
                 assert_eq!(errors.len(), 1);
-                assert_eq!(errors[0], ParserError::UnexpectedToken(Token::Integer(13)))
+                assert_eq!(errors[0], ParserError::IDontWantThis(Token::Integer(13)))
             }
             _ => panic!("expected to fail"),
         };
@@ -309,8 +314,8 @@ mod tests {
                 assert_eq!(
                     errors[0],
                     ParserError::IWantThisNotThat {
-                        wanted: Token::Equals,
-                        found: Token::Integer(13)
+                        expected: Token::Equals,
+                        actual: Token::Integer(13)
                     }
                 )
             }
