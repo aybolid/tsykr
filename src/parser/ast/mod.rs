@@ -13,4 +13,5 @@ where
 {
     /// Returns a token literal for the node.
     fn token_literal(&self) -> &str;
+    fn as_any(&self) -> &dyn std::any::Any;
 }

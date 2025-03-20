@@ -3,7 +3,7 @@ use crate::lexer::Token;
 use super::Node;
 
 /// Identifier ast node.
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Identifier {
     pub token: Token,
 }
@@ -36,5 +36,9 @@ impl Node for Identifier {
             Token::Identifier(name) => name,
             _ => unreachable!(),
         }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
     }
 }

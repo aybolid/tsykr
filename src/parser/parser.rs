@@ -65,3 +65,49 @@ impl Parser {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_new_parser() {
+        let lexer = Lexer::new("let".to_string());
+        let parser = Parser::new(lexer);
+        assert_eq!(parser.current_token, Some(Token::Let))
+    }
+
+    #[test]
+    fn test_next_token() {
+        let lexer = Lexer::new("let x = 5".to_string());
+        let mut parser = Parser::new(lexer);
+        parser.next_token();
+        assert_eq!(
+            parser.current_token,
+            Some(Token::Identifier("x".to_string()))
+        );
+        parser.next_token();
+        assert_eq!(parser.current_token, Some(Token::Equals));
+        parser.next_token();
+        assert_eq!(parser.current_token, Some(Token::Integer(5)));
+    }
+
+    #[test]
+    fn test_parse_identifier() {
+        let lexer = Lexer::new("name variable".to_string());
+        let mut parser = Parser::new(lexer);
+        let stmt = parser.parse_statement().unwrap();
+        require_identifier(stmt, "name");
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        require_identifier(stmt, "variable");
+    }
+
+    fn require_identifier(ident_node: Box<dyn Node>, expected: &str) {
+        if let Some(ident) = ident_node.as_any().downcast_ref::<Identifier>() {
+            assert_eq!(ident.token, Token::Identifier(expected.to_string()));
+        } else {
+            panic!("expected Identifier node");
+        }
+    }
+}

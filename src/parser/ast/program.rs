@@ -29,4 +29,8 @@ impl Node for Program {
     fn token_literal(&self) -> &str {
         ""
     }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        self
+    }
 }
