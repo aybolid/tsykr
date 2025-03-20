@@ -1,4 +1,4 @@
-use super::TokenKind;
+use super::Token;
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -55,7 +55,7 @@ impl Lexer {
     /// Reads an alphabetic token from the input string.
     /// If keyword, returns the corresponding keyword token.
     /// Otherwise, returns an identifier token.
-    fn read_alphabetic_token(&mut self) -> TokenKind {
+    fn read_alphabetic_token(&mut self) -> Token {
         let start_token = self.current_ch.unwrap();
         let mut buf = String::new();
         buf.push(start_token);
@@ -67,10 +67,10 @@ impl Lexer {
             self.read_char();
         }
 
-        TokenKind::new_alphabetic(buf)
+        Token::new_alphabetic(buf)
     }
 
-    fn read_numeric_token(&mut self) -> TokenKind {
+    fn read_numeric_token(&mut self) -> Token {
         let start_token = self.current_ch.unwrap();
         let mut buf = String::new();
         buf.push(start_token);
@@ -83,9 +83,9 @@ impl Lexer {
         }
 
         if buf.contains('.') {
-            TokenKind::Float(buf.parse().unwrap())
+            Token::Float(buf.parse().unwrap())
         } else {
-            TokenKind::Integer(buf.parse().unwrap())
+            Token::Integer(buf.parse().unwrap())
         }
     }
 
@@ -107,7 +107,7 @@ impl Lexer {
 }
 
 impl Iterator for Lexer {
-    type Item = TokenKind;
+    type Item = Token;
 
     fn next(&mut self) -> Option<Self::Item> {
         self.fuck_whitespaces();
@@ -118,59 +118,59 @@ impl Iterator for Lexer {
         }
 
         let token = match ch.expect("cant be None") {
-            '+' => TokenKind::Plus,
-            '-' => TokenKind::Minus,
-            '*' => TokenKind::Asterisk,
-            '/' => TokenKind::Slash,
+            '+' => Token::Plus,
+            '-' => Token::Minus,
+            '*' => Token::Asterisk,
+            '/' => Token::Slash,
 
-            ';' => TokenKind::SemiColon,
-            ':' => TokenKind::Colon,
-            '(' => TokenKind::LeftParen,
-            ')' => TokenKind::RightParen,
-            '{' => TokenKind::LeftCurly,
-            '}' => TokenKind::RightCurly,
-            '[' => TokenKind::LeftBracket,
-            ']' => TokenKind::RightBracket,
-            ',' => TokenKind::Comma,
-            '.' => TokenKind::Dot,
+            ';' => Token::SemiColon,
+            ':' => Token::Colon,
+            '(' => Token::LeftParen,
+            ')' => Token::RightParen,
+            '{' => Token::LeftCurly,
+            '}' => Token::RightCurly,
+            '[' => Token::LeftBracket,
+            ']' => Token::RightBracket,
+            ',' => Token::Comma,
+            '.' => Token::Dot,
 
             '=' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    TokenKind::EqualsEquals
+                    Token::EqualsEquals
                 } else {
-                    TokenKind::Equals
+                    Token::Equals
                 }
             }
             '!' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    TokenKind::BangEquals
+                    Token::BangEquals
                 } else {
-                    TokenKind::Bang
+                    Token::Bang
                 }
             }
             '>' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    TokenKind::GreaterThanEquals
+                    Token::GreaterThanEquals
                 } else {
-                    TokenKind::GreaterThan
+                    Token::GreaterThan
                 }
             }
             '<' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    TokenKind::LessThanEquals
+                    Token::LessThanEquals
                 } else {
-                    TokenKind::LessThan
+                    Token::LessThan
                 }
             }
 
             _ if self.current_is_alphabetic() => return Some(self.read_alphabetic_token()),
             _ if self.current_is_numeric() => return Some(self.read_numeric_token()),
 
-            c => TokenKind::ILLEGAL(c),
+            c => Token::ILLEGAL(c),
         };
 
         self.read_char();
@@ -186,33 +186,33 @@ mod tests {
     fn test_smth_that_makes_sense() {
         let input = String::from("if (true) { return 2 + 2; } else { return 3.25 - 0.25; }");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(TokenKind::If));
-        assert_eq!(lexer.next(), Some(TokenKind::LeftParen));
-        assert_eq!(lexer.next(), Some(TokenKind::True));
-        assert_eq!(lexer.next(), Some(TokenKind::RightParen));
-        assert_eq!(lexer.next(), Some(TokenKind::LeftCurly));
-        assert_eq!(lexer.next(), Some(TokenKind::Return));
-        assert_eq!(lexer.next(), Some(TokenKind::Integer(2)));
-        assert_eq!(lexer.next(), Some(TokenKind::Plus));
-        assert_eq!(lexer.next(), Some(TokenKind::Integer(2)));
-        assert_eq!(lexer.next(), Some(TokenKind::SemiColon));
-        assert_eq!(lexer.next(), Some(TokenKind::RightCurly));
-        assert_eq!(lexer.next(), Some(TokenKind::Else));
-        assert_eq!(lexer.next(), Some(TokenKind::LeftCurly));
-        assert_eq!(lexer.next(), Some(TokenKind::Return));
-        assert_eq!(lexer.next(), Some(TokenKind::Float(3.25)));
-        assert_eq!(lexer.next(), Some(TokenKind::Minus));
-        assert_eq!(lexer.next(), Some(TokenKind::Float(0.25)));
-        assert_eq!(lexer.next(), Some(TokenKind::SemiColon));
-        assert_eq!(lexer.next(), Some(TokenKind::RightCurly));
+        assert_eq!(lexer.next(), Some(Token::If));
+        assert_eq!(lexer.next(), Some(Token::LeftParen));
+        assert_eq!(lexer.next(), Some(Token::True));
+        assert_eq!(lexer.next(), Some(Token::RightParen));
+        assert_eq!(lexer.next(), Some(Token::LeftCurly));
+        assert_eq!(lexer.next(), Some(Token::Return));
+        assert_eq!(lexer.next(), Some(Token::Integer(2)));
+        assert_eq!(lexer.next(), Some(Token::Plus));
+        assert_eq!(lexer.next(), Some(Token::Integer(2)));
+        assert_eq!(lexer.next(), Some(Token::SemiColon));
+        assert_eq!(lexer.next(), Some(Token::RightCurly));
+        assert_eq!(lexer.next(), Some(Token::Else));
+        assert_eq!(lexer.next(), Some(Token::LeftCurly));
+        assert_eq!(lexer.next(), Some(Token::Return));
+        assert_eq!(lexer.next(), Some(Token::Float(3.25)));
+        assert_eq!(lexer.next(), Some(Token::Minus));
+        assert_eq!(lexer.next(), Some(Token::Float(0.25)));
+        assert_eq!(lexer.next(), Some(Token::SemiColon));
+        assert_eq!(lexer.next(), Some(Token::RightCurly));
     }
 
     #[test]
     fn test_boolean_tokens() {
         let input = String::from("true false");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(TokenKind::True));
-        assert_eq!(lexer.next(), Some(TokenKind::False));
+        assert_eq!(lexer.next(), Some(Token::True));
+        assert_eq!(lexer.next(), Some(Token::False));
         assert_eq!(lexer.next(), None);
     }
 
@@ -220,12 +220,12 @@ mod tests {
     fn test_numeric_tokens() {
         let input = String::from("123 456.789 -123 -23.23");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(TokenKind::Integer(123)));
-        assert_eq!(lexer.next(), Some(TokenKind::Float(456.789)));
-        assert_eq!(lexer.next(), Some(TokenKind::Minus));
-        assert_eq!(lexer.next(), Some(TokenKind::Integer(123)));
-        assert_eq!(lexer.next(), Some(TokenKind::Minus));
-        assert_eq!(lexer.next(), Some(TokenKind::Float(23.23)));
+        assert_eq!(lexer.next(), Some(Token::Integer(123)));
+        assert_eq!(lexer.next(), Some(Token::Float(456.789)));
+        assert_eq!(lexer.next(), Some(Token::Minus));
+        assert_eq!(lexer.next(), Some(Token::Integer(123)));
+        assert_eq!(lexer.next(), Some(Token::Minus));
+        assert_eq!(lexer.next(), Some(Token::Float(23.23)));
         assert_eq!(lexer.next(), None);
     }
 
@@ -233,16 +233,16 @@ mod tests {
     fn test_punctuation_tokens() {
         let input = String::from(";:[]{}(),.");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(TokenKind::SemiColon));
-        assert_eq!(lexer.next(), Some(TokenKind::Colon));
-        assert_eq!(lexer.next(), Some(TokenKind::LeftBracket));
-        assert_eq!(lexer.next(), Some(TokenKind::RightBracket));
-        assert_eq!(lexer.next(), Some(TokenKind::LeftCurly));
-        assert_eq!(lexer.next(), Some(TokenKind::RightCurly));
-        assert_eq!(lexer.next(), Some(TokenKind::LeftParen));
-        assert_eq!(lexer.next(), Some(TokenKind::RightParen));
-        assert_eq!(lexer.next(), Some(TokenKind::Comma));
-        assert_eq!(lexer.next(), Some(TokenKind::Dot));
+        assert_eq!(lexer.next(), Some(Token::SemiColon));
+        assert_eq!(lexer.next(), Some(Token::Colon));
+        assert_eq!(lexer.next(), Some(Token::LeftBracket));
+        assert_eq!(lexer.next(), Some(Token::RightBracket));
+        assert_eq!(lexer.next(), Some(Token::LeftCurly));
+        assert_eq!(lexer.next(), Some(Token::RightCurly));
+        assert_eq!(lexer.next(), Some(Token::LeftParen));
+        assert_eq!(lexer.next(), Some(Token::RightParen));
+        assert_eq!(lexer.next(), Some(Token::Comma));
+        assert_eq!(lexer.next(), Some(Token::Dot));
         assert_eq!(lexer.next(), None);
     }
 
@@ -250,14 +250,11 @@ mod tests {
     fn test_alphabetic_token() {
         let input = String::from("let what_x return if else");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(TokenKind::Let));
-        assert_eq!(
-            lexer.next(),
-            Some(TokenKind::Identifier("what_x".to_string()))
-        );
-        assert_eq!(lexer.next(), Some(TokenKind::Return));
-        assert_eq!(lexer.next(), Some(TokenKind::If));
-        assert_eq!(lexer.next(), Some(TokenKind::Else));
+        assert_eq!(lexer.next(), Some(Token::Let));
+        assert_eq!(lexer.next(), Some(Token::Identifier("what_x".to_string())));
+        assert_eq!(lexer.next(), Some(Token::Return));
+        assert_eq!(lexer.next(), Some(Token::If));
+        assert_eq!(lexer.next(), Some(Token::Else));
         assert_eq!(lexer.next(), None);
     }
 
@@ -265,19 +262,19 @@ mod tests {
     fn test_op_tokens() {
         let input = String::from("+-*/=!<>!= <= >= ==");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(TokenKind::Plus));
-        assert_eq!(lexer.next(), Some(TokenKind::Minus));
-        assert_eq!(lexer.next(), Some(TokenKind::Asterisk));
-        assert_eq!(lexer.next(), Some(TokenKind::Slash));
-        assert_eq!(lexer.next(), Some(TokenKind::Equals));
-        assert_eq!(lexer.next(), Some(TokenKind::Bang));
-        assert_eq!(lexer.next(), Some(TokenKind::LessThan));
-        assert_eq!(lexer.next(), Some(TokenKind::GreaterThan));
+        assert_eq!(lexer.next(), Some(Token::Plus));
+        assert_eq!(lexer.next(), Some(Token::Minus));
+        assert_eq!(lexer.next(), Some(Token::Asterisk));
+        assert_eq!(lexer.next(), Some(Token::Slash));
+        assert_eq!(lexer.next(), Some(Token::Equals));
+        assert_eq!(lexer.next(), Some(Token::Bang));
+        assert_eq!(lexer.next(), Some(Token::LessThan));
+        assert_eq!(lexer.next(), Some(Token::GreaterThan));
 
-        assert_eq!(lexer.next(), Some(TokenKind::BangEquals));
-        assert_eq!(lexer.next(), Some(TokenKind::LessThanEquals));
-        assert_eq!(lexer.next(), Some(TokenKind::GreaterThanEquals));
-        assert_eq!(lexer.next(), Some(TokenKind::EqualsEquals));
+        assert_eq!(lexer.next(), Some(Token::BangEquals));
+        assert_eq!(lexer.next(), Some(Token::LessThanEquals));
+        assert_eq!(lexer.next(), Some(Token::GreaterThanEquals));
+        assert_eq!(lexer.next(), Some(Token::EqualsEquals));
         assert_eq!(lexer.next(), None);
     }
 

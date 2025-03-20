@@ -1,11 +1,11 @@
 use std::io::Write;
 
-use crate::lexer::Lexer;
+use crate::{lexer::Lexer, parser::Parser};
 
 const PROMPT: &str = ">> ";
 
 /// Run the REPL. Yoohoo!!!
-pub fn run() -> Result<(), std::io::Error> {
+pub fn run() {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
 
@@ -13,14 +13,16 @@ pub fn run() -> Result<(), std::io::Error> {
 
     loop {
         print!("{PROMPT}");
-        stdout.flush()?;
+        stdout.flush().unwrap();
         let mut buf = String::new();
-        stdin.read_line(&mut buf)?;
+        stdin.read_line(&mut buf).unwrap();
 
         let lexer = Lexer::new(buf);
-        for token in lexer {
-            print!("{token:?} ");
+        let mut parser = Parser::new(lexer);
+
+        match parser.parse() {
+            Ok(program) => println!("{program:?}"),
+            Err(err) => eprintln!("Error: {err}"),
         }
-        println!()
     }
 }

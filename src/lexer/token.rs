@@ -1,5 +1,5 @@
 #[derive(Debug, PartialEq)]
-pub enum TokenKind {
+pub enum Token {
     Plus,
     Equals,
     Minus,
@@ -41,20 +41,20 @@ pub enum TokenKind {
     ILLEGAL(char),
 }
 
-impl TokenKind {
+impl Token {
     /// If keyword, returns the corresponding keyword token.
     /// Otherwise, returns an identifier token.
-    pub fn new_alphabetic(string: String) -> TokenKind {
+    pub fn new_alphabetic(string: String) -> Token {
         match &string[..] {
-            "let" => TokenKind::Let,
-            "fn" => TokenKind::Function,
-            "return" => TokenKind::Return,
-            "if" => TokenKind::If,
-            "else" => TokenKind::Else,
-            "true" => TokenKind::True,
-            "false" => TokenKind::False,
+            "let" => Token::Let,
+            "fn" => Token::Function,
+            "return" => Token::Return,
+            "if" => Token::If,
+            "else" => Token::Else,
+            "true" => Token::True,
+            "false" => Token::False,
 
-            _ => TokenKind::Identifier(string),
+            _ => Token::Identifier(string),
         }
     }
 }

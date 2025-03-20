@@ -1,7 +1,9 @@
+use anyhow::Result;
 use clap::Parser;
 use lexer::Lexer;
 
 mod lexer;
+mod parser;
 mod repl;
 
 #[derive(Debug, Parser)]
@@ -9,7 +11,7 @@ struct Args {
     path: Option<String>,
 }
 
-fn main() -> Result<(), Box<dyn std::error::Error>> {
+fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.path {
@@ -21,7 +23,9 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
             }
             println!()
         }
-        None => repl::run()?,
+        None => {
+            repl::run();
+        }
     }
 
     Ok(())
