@@ -3,11 +3,9 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    Expression, ExpressionStatement, Identifier, LetStatement, Program, ReturnStatement, Statement,
+    precedence::Precedence, Expression, ExpressionStatement, Identifier, LetStatement, Program,
+    ReturnStatement, Statement,
 };
-
-type PrefixParseFunction = fn() -> dyn Expression;
-type InfixParseFunction = fn(dyn Expression) -> dyn Expression;
 
 #[derive(Debug, PartialEq, Error)]
 pub enum ParserError {
@@ -76,18 +74,39 @@ impl Parser {
         }
     }
 
-    fn parse_expression(&mut self) -> Result<Box<dyn Expression>, ParserError> {
-        todo!()
-    }
-
     /// Parses an expression statement
     fn parse_expression_statement(
         &mut self,
         trigger_token: Token,
     ) -> Result<ExpressionStatement, ParserError> {
-        let expr_statement = ExpressionStatement::new(trigger_token, self.parse_expression()?);
+        let expr = self.parse_expression(trigger_token.clone(), Precedence::Lowest)?;
+        let expr_statement = ExpressionStatement::new(trigger_token, expr);
 
         Ok(expr_statement)
+    }
+
+    fn parse_expression(
+        &mut self,
+        token: Token,
+        precedence: Precedence,
+    ) -> Result<Box<dyn Expression>, ParserError> {
+        let left_expr = match token {
+            Token::Identifier(_) => self.parse_identifier(token)?,
+            _ => todo!(),
+        };
+
+        Ok(Box::new(left_expr))
+    }
+
+    fn parse_identifier(&mut self, token: Token) -> Result<Identifier, ParserError> {
+        if !matches!(token, Token::Identifier(_)) {
+            return Err(ParserError::IWantThisNotThat {
+                expected: Token::Identifier("<name placeholder>".to_string()),
+                actual: token,
+            });
+        }
+
+        Ok(Identifier::new(token))
     }
 
     /// Parses a return statement
@@ -126,6 +145,7 @@ impl Parser {
 
         self.expect_next_token_fn(|t| matches!(t, &Token::Identifier(_)))?;
         let identifier_token = self.current_token.take().expect("expected identifier");
+        let identifier = self.parse_identifier(identifier_token)?;
         self.expect_next_token(Token::Equals)?;
 
         // Skip value for now
@@ -134,10 +154,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(LetStatement::new(
-            trigger_token,
-            Identifier::new(identifier_token),
-        ))
+        Ok(LetStatement::new(trigger_token, identifier))
     }
 
     /// Populates the current token with the next token from the lexer.
