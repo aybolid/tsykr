@@ -1,8 +1,8 @@
-use super::Node;
+use super::{Node, Statement};
 
 #[derive(Debug)]
 pub struct Program {
-    pub statements: Vec<Box<dyn Node>>,
+    pub statements: Vec<Box<dyn Statement>>,
 }
 
 impl Program {
@@ -10,7 +10,7 @@ impl Program {
         Program { statements: vec![] }
     }
 
-    pub fn push_statement(&mut self, statement: Box<dyn Node>) {
+    pub fn push_statement(&mut self, statement: Box<dyn Statement>) {
         self.statements.push(statement);
     }
 }
@@ -26,8 +26,8 @@ impl ToString for Program {
 }
 
 impl Node for Program {
-    fn token_literal(&self) -> &str {
-        ""
+    fn token_literal(&self) -> String {
+        "".to_string()
     }
 
     fn as_any(&self) -> &dyn std::any::Any {

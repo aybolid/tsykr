@@ -1,6 +1,6 @@
 use crate::lexer::Token;
 
-use super::Node;
+use super::{Node, Statement};
 
 /// Let statement ast node.
 #[derive(Debug, PartialEq)]
@@ -27,11 +27,13 @@ impl ToString for ReturnStatement {
 }
 
 impl Node for ReturnStatement {
-    fn token_literal(&self) -> &str {
-        "return"
+    fn token_literal(&self) -> String {
+        self.token.literal()
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 }
+
+impl Statement for ReturnStatement {}

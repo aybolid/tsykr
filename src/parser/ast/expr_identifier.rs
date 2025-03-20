@@ -1,6 +1,6 @@
 use crate::lexer::Token;
 
-use super::Node;
+use super::{Expression, Node};
 
 /// Identifier ast node.
 #[derive(Debug, PartialEq)]
@@ -23,22 +23,18 @@ impl Identifier {
 
 impl ToString for Identifier {
     fn to_string(&self) -> String {
-        match &self.token {
-            Token::Identifier(name) => name.clone(),
-            _ => unreachable!(),
-        }
+        self.token.literal()
     }
 }
 
 impl Node for Identifier {
-    fn token_literal(&self) -> &str {
-        match &self.token {
-            Token::Identifier(name) => name,
-            _ => unreachable!(),
-        }
+    fn token_literal(&self) -> String {
+        self.token.literal()
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 }
+
+impl Expression for Identifier {}

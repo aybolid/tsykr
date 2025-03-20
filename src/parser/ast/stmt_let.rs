@@ -1,6 +1,6 @@
 use crate::lexer::Token;
 
-use super::{Identifier, Node};
+use super::{Identifier, Node, Statement};
 
 /// Let statement ast node.
 #[derive(Debug, PartialEq)]
@@ -31,11 +31,13 @@ impl ToString for LetStatement {
 }
 
 impl Node for LetStatement {
-    fn token_literal(&self) -> &str {
-        "let"
+    fn token_literal(&self) -> String {
+        self.token.literal()
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
     }
 }
+
+impl Statement for LetStatement {}

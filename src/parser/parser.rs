@@ -2,7 +2,9 @@ use thiserror::Error;
 
 use crate::lexer::{Lexer, Token};
 
-use super::{Identifier, LetStatement, Node, Program, ReturnStatement};
+use super::{
+    Expression, ExpressionStatement, Identifier, LetStatement, Program, ReturnStatement, Statement,
+};
 
 #[derive(Debug, PartialEq, Error)]
 pub enum ParserError {
@@ -58,16 +60,29 @@ impl Parser {
 
     /// Parses a statement starting from the current token.
     /// Calling this function takes the current token.
-    fn parse_statement(&mut self) -> Result<Box<dyn Node>, ParserError> {
+    fn parse_statement(&mut self) -> Result<Box<dyn Statement>, ParserError> {
         if let Some(token) = self.current_token.take() {
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement(token)?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement(token)?)),
-                _ => return Err(ParserError::UnexpectedToken(token)),
+                other_token => Ok(Box::new(self.parse_expression_statement(other_token)?)),
             }
         } else {
             unreachable!()
         }
+    }
+
+    fn parse_expression(&mut self) -> Result<Box<dyn Expression>, ParserError> {
+        todo!()
+    }
+
+    fn parse_expression_statement(
+        &mut self,
+        trigger_token: Token,
+    ) -> Result<ExpressionStatement, ParserError> {
+        let expr_statement = ExpressionStatement::new(trigger_token, self.parse_expression()?);
+
+        Ok(expr_statement)
     }
 
     /// Parses a return statement
@@ -165,6 +180,8 @@ impl Parser {
 
 #[cfg(test)]
 mod tests {
+    use crate::parser::{Expression, Node};
+
     use super::*;
 
     #[test]
@@ -301,7 +318,7 @@ mod tests {
         };
     }
 
-    fn assert_identifier(node: Box<dyn Node>, expected: &str) {
+    fn assert_identifier(node: Box<dyn Expression>, expected: &str) {
         if let Some(ident) = node.as_any().downcast_ref::<Identifier>() {
             assert_eq!(ident.token, Token::Identifier(expected.to_string()));
         } else {
@@ -309,16 +326,16 @@ mod tests {
         }
     }
 
-    fn assert_return_statement(node: Box<dyn Node>) {
-        if let Some(return_stmt) = node.as_any().downcast_ref::<ReturnStatement>() {
+    fn assert_return_statement(stmt: Box<dyn Statement>) {
+        if let Some(return_stmt) = stmt.as_any().downcast_ref::<ReturnStatement>() {
             assert_eq!(return_stmt.token, Token::Return);
         } else {
             panic!("expected ReturnStatement node");
         }
     }
 
-    fn assert_let_statement(node: Box<dyn Node>, expected_identifier: &str) {
-        if let Some(let_stmt) = node.as_any().downcast_ref::<LetStatement>() {
+    fn assert_let_statement(stmt: Box<dyn Statement>, expected_identifier: &str) {
+        if let Some(let_stmt) = stmt.as_any().downcast_ref::<LetStatement>() {
             assert_eq!(let_stmt.token, Token::Let);
             assert_identifier(
                 Box::new(Identifier::new(Token::Identifier(
