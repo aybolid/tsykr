@@ -11,11 +11,8 @@ use super::{
 pub enum ParserError {
     #[error("Unexpected token: {0}")]
     IDontWantThis(Token),
-    #[error("Unexpected token: wanted {expected} but found {actual:?}")]
-    IWantThisNotThat {
-        expected: Token,
-        actual: Option<Token>,
-    },
+    #[error("Unexpected token: wanted {expected} but found {actual}")]
+    IWantThisNotThat { expected: Token, actual: Token },
     #[error("Unexpected end of input but wanted {0}")]
     WhyNothingIfIWantThis(Token),
     #[error("Unexpected end of input")]
@@ -256,7 +253,7 @@ impl Parser {
             Some(token) if token == &expected_token => Ok(()),
             Some(token) => Err(ParserError::IWantThisNotThat {
                 expected: expected_token,
-                actual: Some(token.clone()),
+                actual: token.clone(),
             }),
             None => Err(ParserError::WhyNothingIfIWantThis(expected_token)),
         }
@@ -270,7 +267,7 @@ impl Parser {
             Some(token) if token == &expected_token => Ok(()),
             Some(token) => Err(ParserError::IWantThisNotThat {
                 expected: expected_token,
-                actual: Some(token.clone()),
+                actual: token.clone(),
             }),
             None => Err(ParserError::WhyNothingIfIWantThis(expected_token)),
         }
