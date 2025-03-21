@@ -3,8 +3,8 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Expression, ExpressionStatement, Identifier, LetStatement, Program,
-    ReturnStatement, Statement,
+    precedence::Precedence, Expression, ExpressionStatement, Identifier, Integer, LetStatement,
+    Program, ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -80,7 +80,7 @@ impl Parser {
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
             }
         } else {
-            unreachable!()
+            Err(ParserError::WhereIsEverybody)
         }
     }
 
@@ -106,12 +106,27 @@ impl Parser {
             return Err(ParserError::WhereIsEverybody);
         }
 
-        let left_expr = match self.current_token.as_ref().expect("checked before") {
-            Token::Identifier(_) => self.parse_identifier()?,
-            _ => todo!(),
-        };
+        let left_expr: Box<dyn Expression> =
+            match self.current_token.as_ref().expect("checked before") {
+                Token::Identifier(_) => Box::new(self.parse_identifier()?),
+                Token::Integer(_) => Box::new(self.parse_integer()?),
 
-        Ok(Box::new(left_expr))
+                _ => todo!(),
+            };
+
+        Ok(left_expr)
+    }
+
+    /// Parses an integer literal.
+    ///
+    /// Takes the current token and returns an Integer.
+    fn parse_integer(&mut self) -> Result<Integer, ParserError> {
+        self.expect_current_token_fn(|t| matches!(t, &Token::Integer(_)))?;
+
+        let token = self.current_token.take().expect("checked before");
+        let integer = Integer::new(token);
+
+        Ok(integer)
     }
 
     /// Parses an identifier.
@@ -279,6 +294,27 @@ mod tests {
         assert_eq!(parser.peek_token, Some(Token::Integer(5)));
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
+        }
+    }
+
+    #[test]
+    fn test_parse_integer() {
+        let lexer = Lexer::new("5 009".to_string());
+        let mut parser = Parser::new(lexer);
+
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "5");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "9");
+        } else {
+            panic!("expected ExpressionStatement node");
         }
     }
 

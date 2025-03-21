@@ -1,4 +1,5 @@
 mod expr_identifier;
+mod expr_integer;
 mod program;
 mod stmt_expr;
 mod stmt_let;
@@ -7,6 +8,7 @@ mod stmt_return;
 use std::fmt::Debug;
 
 pub use expr_identifier::*;
+pub use expr_integer::*;
 pub use program::*;
 pub use stmt_expr::*;
 pub use stmt_let::*;
