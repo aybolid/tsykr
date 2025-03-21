@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 #[derive(Debug, PartialEq, Clone)]
 pub enum Token {
     Plus,
@@ -99,6 +101,18 @@ impl Token {
             Self::Else => "else".to_string(),
 
             Self::ILLEGAL(char) => char.to_string(),
+        }
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Self::Identifier(name) => write!(f, "Identifier({})", name),
+            Self::Integer(value) => write!(f, "Integer({})", value),
+            Self::Float(value) => write!(f, "Float({})", value),
+            Self::ILLEGAL(c) => write!(f, "Illegal({})", c),
+            _ => write!(f, "{}", self.literal()),
         }
     }
 }

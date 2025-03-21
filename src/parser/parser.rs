@@ -9,14 +9,14 @@ use super::{
 
 #[derive(Debug, PartialEq, Error)]
 pub enum ParserError {
-    #[error("Unexpected token: {0:?}")]
+    #[error("Unexpected token: {0}")]
     IDontWantThis(Token),
-    #[error("Unexpected token: wanted {expected:?} but found {actual:?}")]
+    #[error("Unexpected token: wanted {expected} but found {actual:?}")]
     IWantThisNotThat {
         expected: Token,
         actual: Option<Token>,
     },
-    #[error("Unexpected end of input but wanted {0:?}")]
+    #[error("Unexpected end of input but wanted {0}")]
     WhyNothingIfIWantThis(Token),
     #[error("Unexpected end of input")]
     WhereIsEverybody,
@@ -30,6 +30,7 @@ pub struct Parser {
 }
 
 impl Parser {
+    /// Creates a new parser instance.
     pub fn new(lexer: Lexer) -> Self {
         let mut parser = Parser {
             lexer,
@@ -41,6 +42,8 @@ impl Parser {
         parser
     }
 
+    /// Parses a program.
+    /// Returns a `Result` containing a `Program` or a vector of `ParserError`s.
     pub fn parse(&mut self) -> Result<Program, Vec<ParserError>> {
         let mut program = Program::new();
 
@@ -70,7 +73,6 @@ impl Parser {
     /// Calling this function takes the current token.
     fn parse_statement(&mut self) -> Result<Box<dyn Statement>, ParserError> {
         if let Some(ref token) = self.current_token {
-            println!("{token:?}");
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement()?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement()?)),
@@ -95,6 +97,7 @@ impl Parser {
         ))
     }
 
+    /// Parses an expression.
     fn parse_expression(
         &mut self,
         _precedence: Precedence,
@@ -179,6 +182,9 @@ impl Parser {
         }
     }
 
+    /// Checks if the current token matches the expected token.
+    ///
+    /// Generally, it's better to use this method instead of `expect_current_token_fn` as it produces a more descriptive error message.
     fn expect_current_token(&mut self, expected_token: Token) -> Result<(), ParserError> {
         match &self.current_token {
             Some(token) if token == &expected_token => Ok(()),
@@ -190,6 +196,9 @@ impl Parser {
         }
     }
 
+    /// Checks if the current token matches the predicate.
+    ///
+    /// Use `expect_current_token` if equality check is all you need.
     fn expect_current_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
     where
         F: Fn(&Token) -> bool,
