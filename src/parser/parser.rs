@@ -3,7 +3,7 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Expression, ExpressionStatement, Float, Identifier, Integer,
+    precedence::Precedence, Boolean, Expression, ExpressionStatement, Float, Identifier, Integer,
     LetStatement, Program, ReturnStatement, Statement,
 };
 
@@ -112,10 +112,22 @@ impl Parser {
                 Token::Integer(_) => Box::new(self.parse_integer()?),
                 Token::Float(_) => Box::new(self.parse_float()?),
 
+                Token::True | Token::False => Box::new(self.parse_boolean()?),
+
                 _ => todo!(),
             };
 
         Ok(left_expr)
+    }
+
+    /// Parses a boolean literal.
+    ///
+    /// Takes the current token and returns a Boolean.
+    fn parse_boolean(&mut self) -> Result<Boolean, ParserError> {
+        self.expect_current_token_fn(|t| t == &Token::True || t == &Token::False)?;
+        Ok(Boolean::new(
+            self.current_token.take().expect("checked before"),
+        ))
     }
 
     /// Parses a float literal.
@@ -123,11 +135,9 @@ impl Parser {
     /// Takes the current token and returns a Float.
     fn parse_float(&mut self) -> Result<Float, ParserError> {
         self.expect_current_token_fn(|t| matches!(t, &Token::Float(_)))?;
-
-        let token = self.current_token.take().expect("checked before");
-        let float = Float::new(token);
-
-        Ok(float)
+        Ok(Float::new(
+            self.current_token.take().expect("checked before"),
+        ))
     }
 
     /// Parses an integer literal.
@@ -135,11 +145,9 @@ impl Parser {
     /// Takes the current token and returns an Integer.
     fn parse_integer(&mut self) -> Result<Integer, ParserError> {
         self.expect_current_token_fn(|t| matches!(t, &Token::Integer(_)))?;
-
-        let token = self.current_token.take().expect("checked before");
-        let integer = Integer::new(token);
-
-        Ok(integer)
+        Ok(Integer::new(
+            self.current_token.take().expect("checked before"),
+        ))
     }
 
     /// Parses an identifier.
@@ -147,11 +155,9 @@ impl Parser {
     /// Takes the current token and returns an Identifier.
     fn parse_identifier(&mut self) -> Result<Identifier, ParserError> {
         self.expect_current_token_fn(|t| matches!(t, &Token::Identifier(_)))?;
-
-        let token = self.current_token.take().expect("checked before");
-        let identifier = Identifier::new(token);
-
-        Ok(identifier)
+        Ok(Identifier::new(
+            self.current_token.take().expect("checked before"),
+        ))
     }
 
     /// Parses a return statement
@@ -307,6 +313,27 @@ mod tests {
         assert_eq!(parser.peek_token, Some(Token::Integer(5)));
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
+        }
+    }
+
+    #[test]
+    fn test_parse_boolean() {
+        let lexer = Lexer::new("true false".to_string());
+        let mut parser = Parser::new(lexer);
+
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "true");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "false");
+        } else {
+            panic!("expected ExpressionStatement node");
         }
     }
 
