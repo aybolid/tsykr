@@ -3,8 +3,8 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Expression, ExpressionStatement, Identifier, Integer, LetStatement,
-    Program, ReturnStatement, Statement,
+    precedence::Precedence, Expression, ExpressionStatement, Float, Identifier, Integer,
+    LetStatement, Program, ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -110,11 +110,24 @@ impl Parser {
             match self.current_token.as_ref().expect("checked before") {
                 Token::Identifier(_) => Box::new(self.parse_identifier()?),
                 Token::Integer(_) => Box::new(self.parse_integer()?),
+                Token::Float(_) => Box::new(self.parse_float()?),
 
                 _ => todo!(),
             };
 
         Ok(left_expr)
+    }
+
+    /// Parses a float literal.
+    ///
+    /// Takes the current token and returns a Float.
+    fn parse_float(&mut self) -> Result<Float, ParserError> {
+        self.expect_current_token_fn(|t| matches!(t, &Token::Float(_)))?;
+
+        let token = self.current_token.take().expect("checked before");
+        let float = Float::new(token);
+
+        Ok(float)
     }
 
     /// Parses an integer literal.
@@ -294,6 +307,27 @@ mod tests {
         assert_eq!(parser.peek_token, Some(Token::Integer(5)));
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
+        }
+    }
+
+    #[test]
+    fn test_parse_float() {
+        let lexer = Lexer::new("3.14 32.00878".to_string());
+        let mut parser = Parser::new(lexer);
+
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "3.14");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "32.00878");
+        } else {
+            panic!("expected ExpressionStatement node");
         }
     }
 
