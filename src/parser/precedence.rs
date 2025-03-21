@@ -1,6 +1,7 @@
 use crate::lexer::Token;
 
 /// Expression precedence
+#[derive(Debug, PartialEq, PartialOrd)]
 pub enum Precedence {
     Lowest,
     /// ==, !=

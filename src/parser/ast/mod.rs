@@ -1,6 +1,7 @@
 mod expr_boolean;
 mod expr_float;
 mod expr_identifier;
+mod expr_infixed;
 mod expr_integer;
 mod expr_prefixed;
 mod program;
@@ -13,6 +14,7 @@ use std::fmt::Debug;
 pub use expr_boolean::*;
 pub use expr_float::*;
 pub use expr_identifier::*;
+pub use expr_infixed::*;
 pub use expr_integer::*;
 pub use expr_prefixed::*;
 pub use program::*;

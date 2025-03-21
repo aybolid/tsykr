@@ -3,8 +3,8 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Boolean, Expression, ExpressionStatement, Float, Identifier, Integer,
-    LetStatement, Prefixed, Program, ReturnStatement, Statement,
+    precedence::Precedence, Boolean, Expression, ExpressionStatement, Float, Identifier, Infixed,
+    Integer, LetStatement, Prefixed, Program, ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -100,13 +100,13 @@ impl Parser {
     /// Parses an expression.
     fn parse_expression(
         &mut self,
-        _precedence: Precedence,
+        precedence: Precedence,
     ) -> Result<Box<dyn Expression>, ParserError> {
         if self.current_token.is_none() {
             return Err(ParserError::WhereIsEverybody);
         }
 
-        let left_expr: Box<dyn Expression> =
+        let mut expr: Box<dyn Expression> =
             match self.current_token.as_ref().expect("checked before") {
                 Token::Identifier(_) => Box::new(self.parse_identifier()?),
                 Token::Integer(_) => Box::new(self.parse_integer()?),
@@ -114,19 +114,52 @@ impl Parser {
                 Token::True | Token::False => Box::new(self.parse_boolean()?),
                 Token::Bang | Token::Minus => Box::new(self.parse_prefixed_expression()?),
 
-                _ => todo!(),
+                t => return Err(ParserError::IDontWantThis(t.clone())),
             };
 
-        Ok(left_expr)
+        while self.peek_token != Some(Token::SemiColon)
+            && self.peek_token.is_some()
+            && precedence < Precedence::from_token(self.peek_token.clone().expect("checked before"))
+        {
+            let infix_expr: Option<Box<dyn Expression>> =
+                match self.peek_token.as_ref().expect("checked before") {
+                    _ => {
+                        self.next_token();
+                        Some(Box::new(self.parse_infixed_expression(expr)?))
+                    }
+                };
+
+            match infix_expr {
+                Some(infix_expr) => {
+                    expr = infix_expr;
+                }
+                // None => return Ok(expr),
+                None => unreachable!(),
+            };
+        }
+
+        Ok(expr)
     }
 
+    /// Parses an infixed expression.
+    fn parse_infixed_expression(
+        &mut self,
+        left: Box<dyn Expression>,
+    ) -> Result<Infixed, ParserError> {
+        let op_token = self.current_token.take().expect("checked before");
+        self.next_token();
+        let right = self.parse_expression(Precedence::from_token(op_token.clone()))?;
+        Ok(Infixed::new(op_token, left, right))
+    }
+
+    /// Parses a prefixed expression.
     fn parse_prefixed_expression(&mut self) -> Result<Prefixed, ParserError> {
         self.expect_current_token_fn(|t| matches!(t, &Token::Bang | &Token::Minus))?;
         let op_token = self.current_token.take().expect("checked before");
         self.next_token();
         Ok(Prefixed::new(
             op_token,
-            self.parse_expression(Precedence::Lowest)?,
+            self.parse_expression(Precedence::Prefix)?,
         ))
     }
 
@@ -325,6 +358,25 @@ mod tests {
         assert_eq!(parser.peek_token, Some(Token::Integer(5)));
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
+        }
+    }
+
+    #[test]
+    fn test_parse_infixed() {
+        let lexer = Lexer::new("6 + 2".to_string());
+        let mut parser = Parser::new(lexer);
+
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            if let Some(infix_expr) = expr_stmt.expression.as_any().downcast_ref::<Infixed>() {
+                assert_eq!(infix_expr.left.token_literal(), "6");
+                assert_eq!(infix_expr.op, Token::Plus);
+                assert_eq!(infix_expr.right.token_literal(), "2");
+            } else {
+                panic!("expected Infix node");
+            }
+        } else {
+            panic!("expected ExpressionStatement node");
         }
     }
 

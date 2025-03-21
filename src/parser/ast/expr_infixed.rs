@@ -2,27 +2,26 @@ use crate::lexer::Token;
 
 use super::{Expression, Node};
 
-/// Prefixed ast node.
+/// Infixed ast node.
 #[derive(Debug)]
-pub struct Prefixed {
-    /// Operator token
+pub struct Infixed {
+    // Operator token
+    pub left: Box<dyn Expression>,
     pub op: Token,
     pub right: Box<dyn Expression>,
 }
 
-impl Prefixed {
-    /// Creates a new prefixed node from a token.
-    /// Asserts that the token is either `Token::Bang` or `Token::Minus`.
-    pub fn new(op: Token, right: Box<dyn Expression>) -> Self {
-        assert!(op == Token::Bang || op == Token::Minus);
-
-        Self { op, right }
+impl Infixed {
+    /// Creates a new infixed node from a token.
+    pub fn new(op: Token, left: Box<dyn Expression>, right: Box<dyn Expression>) -> Self {
+        Self { op, left, right }
     }
 }
 
-impl ToString for Prefixed {
+impl ToString for Infixed {
     fn to_string(&self) -> String {
         let mut out = String::from("(");
+        out.push_str(&self.left.to_string());
         out.push_str(&self.op.literal());
         out.push_str(&self.right.to_string());
         out.push_str(")");
@@ -30,7 +29,7 @@ impl ToString for Prefixed {
     }
 }
 
-impl Node for Prefixed {
+impl Node for Infixed {
     fn token_literal(&self) -> String {
         self.op.literal()
     }
@@ -40,4 +39,4 @@ impl Node for Prefixed {
     }
 }
 
-impl Expression for Prefixed {}
+impl Expression for Infixed {}
