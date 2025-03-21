@@ -25,7 +25,8 @@ impl LetStatement {
 
 impl ToString for LetStatement {
     fn to_string(&self) -> String {
-        let mut out = String::from("let ");
+        let mut out = self.token.literal();
+        out.push_str(" ");
 
         out.push_str(&self.identifier.to_string());
         out.push_str(" = ");

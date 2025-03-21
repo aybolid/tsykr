@@ -4,7 +4,7 @@ use crate::lexer::{Lexer, Token};
 
 use super::{
     precedence::Precedence, Boolean, Expression, ExpressionStatement, Float, Identifier, Integer,
-    LetStatement, Program, ReturnStatement, Statement,
+    LetStatement, Prefixed, Program, ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -111,13 +111,23 @@ impl Parser {
                 Token::Identifier(_) => Box::new(self.parse_identifier()?),
                 Token::Integer(_) => Box::new(self.parse_integer()?),
                 Token::Float(_) => Box::new(self.parse_float()?),
-
                 Token::True | Token::False => Box::new(self.parse_boolean()?),
+                Token::Bang | Token::Minus => Box::new(self.parse_prefixed_expression()?),
 
                 _ => todo!(),
             };
 
         Ok(left_expr)
+    }
+
+    fn parse_prefixed_expression(&mut self) -> Result<Prefixed, ParserError> {
+        self.expect_current_token_fn(|t| matches!(t, &Token::Bang | &Token::Minus))?;
+        let op_token = self.current_token.take().expect("checked before");
+        self.next_token();
+        Ok(Prefixed::new(
+            op_token,
+            self.parse_expression(Precedence::Lowest)?,
+        ))
     }
 
     /// Parses a boolean literal.
@@ -206,6 +216,7 @@ impl Parser {
     /// Checks if the peek token matches the expected token.
     ///
     /// Generally, it's better to use this method instead of `expect_next_token_fn` as it produces a more descriptive error message.
+    #[allow(unused)]
     fn expect_peek_token(&mut self, expected_token: Token) -> Result<(), ParserError> {
         match &self.peek_token {
             Some(token) if token == &expected_token => Ok(()),
@@ -314,6 +325,37 @@ mod tests {
         assert_eq!(parser.peek_token, Some(Token::Integer(5)));
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
+        }
+    }
+
+    #[test]
+    fn test_parse_prefixed() {
+        let lexer = Lexer::new("-5 !true".to_string());
+        let mut parser = Parser::new(lexer);
+
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
+                assert_eq!(prefix_expr.op, Token::Minus);
+                assert_eq!(prefix_expr.right.token_literal(), "5");
+            } else {
+                panic!("expected Prefixed node");
+            }
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
+                assert_eq!(prefix_expr.op, Token::Bang);
+                assert_eq!(prefix_expr.right.token_literal(), "true");
+            } else {
+                panic!("expected Prefixed node");
+            }
+        } else {
+            panic!("expected ExpressionStatement node");
         }
     }
 

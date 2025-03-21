@@ -20,10 +20,9 @@ impl ReturnStatement {
 
 impl ToString for ReturnStatement {
     fn to_string(&self) -> String {
-        let mut out = String::from("return ");
-
+        let mut out = self.token.literal();
+        out.push_str(" ");
         out.push_str(&self.value.to_string());
-
         out
     }
 }

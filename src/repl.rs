@@ -21,7 +21,11 @@ pub fn run() {
         let mut parser = Parser::new(lexer);
 
         match parser.parse() {
-            Ok(program) => println!("{program:#?}"),
+            Ok(program) => {
+                println!("{program:#?}");
+                println!("Reconstructed program from ast:");
+                println!("{}", program.to_string());
+            }
             Err(errs) => {
                 println!("Parser errors:");
                 for err in errs {
