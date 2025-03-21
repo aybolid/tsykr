@@ -166,13 +166,13 @@ impl Parser {
         let return_token = self.current_token.take().expect("checked before");
         self.next_token();
 
-        // Skip value for now
-        // TODO: parse expression
-        while !matches!(self.current_token, Some(Token::SemiColon)) {
+        let value = self.parse_expression(Precedence::Lowest)?;
+
+        if self.peek_token == Some(Token::SemiColon) {
             self.next_token();
         }
 
-        Ok(ReturnStatement::new(return_token))
+        Ok(ReturnStatement::new(return_token, value))
     }
 
     /// Parses a let statement
@@ -414,13 +414,13 @@ mod tests {
 
     #[test]
     fn test_parse_return_statement() {
-        let lexer = Lexer::new("return 5; return 10;".to_string());
+        let lexer = Lexer::new("return 5; return false;".to_string());
         let mut parser = Parser::new(lexer);
         let stmt = parser.parse_statement().unwrap();
-        assert_return_statement(stmt);
+        assert_return_statement(stmt, "5");
         parser.next_token();
         let stmt = parser.parse_statement().unwrap();
-        assert_return_statement(stmt);
+        assert_return_statement(stmt, "false");
     }
 
     #[test]
@@ -471,9 +471,10 @@ mod tests {
         }
     }
 
-    fn assert_return_statement(stmt: Box<dyn Statement>) {
+    fn assert_return_statement(stmt: Box<dyn Statement>, expected_value: &str) {
         if let Some(return_stmt) = stmt.as_any().downcast_ref::<ReturnStatement>() {
             assert_eq!(return_stmt.token, Token::Return);
+            assert_eq!(return_stmt.value.to_string(), expected_value.to_string());
         } else {
             panic!("expected ReturnStatement node");
         }

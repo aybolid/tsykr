@@ -1,26 +1,28 @@
 use crate::lexer::Token;
 
-use super::{Node, Statement};
+use super::{Expression, Node, Statement};
 
 /// Let statement ast node.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct ReturnStatement {
     pub token: Token,
-    // TODO: add expression value
+    pub value: Box<dyn Expression>,
 }
 
 impl ReturnStatement {
     /// Creates a new return statement node.
     /// Asserts that the token is a `Token::Return`.
-    pub fn new(token: Token) -> Self {
+    pub fn new(token: Token, value: Box<dyn Expression>) -> Self {
         assert_eq!(token, Token::Return, "expected return token");
-        ReturnStatement { token }
+        ReturnStatement { token, value }
     }
 }
 
 impl ToString for ReturnStatement {
     fn to_string(&self) -> String {
-        let out = String::from("return ");
+        let mut out = String::from("return ");
+
+        out.push_str(&self.value.to_string());
 
         out
     }

@@ -3,7 +3,7 @@ use crate::lexer::Token;
 use super::{Expression, Node};
 
 /// Identifier ast node.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Identifier {
     pub token: Token,
 }

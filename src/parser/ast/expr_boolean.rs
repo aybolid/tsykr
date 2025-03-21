@@ -3,7 +3,7 @@ use crate::lexer::Token;
 use super::{Expression, Node};
 
 /// Boolean ast node.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Boolean {
     pub token: Token,
 }

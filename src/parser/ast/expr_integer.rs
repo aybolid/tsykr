@@ -3,7 +3,7 @@ use crate::lexer::Token;
 use super::{Expression, Node};
 
 /// Integer ast node.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct Integer {
     pub token: Token,
 }
