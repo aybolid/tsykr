@@ -12,16 +12,21 @@ pub enum ParserError {
     #[error("Unexpected token: {0:?}")]
     IDontWantThis(Token),
     #[error("Unexpected token: wanted {expected:?} but found {actual:?}")]
-    IWantThisNotThat { expected: Token, actual: Token },
+    IWantThisNotThat {
+        expected: Token,
+        actual: Option<Token>,
+    },
     #[error("Unexpected end of input but wanted {0:?}")]
     WhyNothingIfIWantThis(Token),
     #[error("Unexpected end of input")]
     WhereIsEverybody,
 }
 
+#[derive(Debug)]
 pub struct Parser {
     lexer: Lexer,
     current_token: Option<Token>,
+    peek_token: Option<Token>,
 }
 
 impl Parser {
@@ -29,8 +34,9 @@ impl Parser {
         let mut parser = Parser {
             lexer,
             current_token: None,
+            peek_token: None,
         };
-
+        parser.next_token();
         parser.next_token();
         parser
     }
@@ -63,12 +69,12 @@ impl Parser {
     /// Parses a statement starting from the current token.
     /// Calling this function takes the current token.
     fn parse_statement(&mut self) -> Result<Box<dyn Statement>, ParserError> {
-        if let Some(token) = self.current_token.take() {
-            match token {
-                Token::Let => Ok(Box::new(self.parse_let_statement(token)?)),
-                Token::Return => Ok(Box::new(self.parse_return_statement(token)?)),
+        if let Some(token) = self.current_token.clone() {
+            match &token {
+                Token::Let => Ok(Box::new(self.parse_let_statement()?)),
+                Token::Return => Ok(Box::new(self.parse_return_statement()?)),
                 Token::ILLEGAL(_) => Err(ParserError::IDontWantThis(token)),
-                other_token => Ok(Box::new(self.parse_expression_statement(other_token)?)),
+                other_token => Ok(Box::new(self.parse_expression_statement()?)),
             }
         } else {
             unreachable!()
@@ -76,53 +82,58 @@ impl Parser {
     }
 
     /// Parses an expression statement
-    fn parse_expression_statement(
-        &mut self,
-        trigger_token: Token,
-    ) -> Result<ExpressionStatement, ParserError> {
-        let expr = self.parse_expression(trigger_token.clone(), Precedence::Lowest)?;
-        let expr_statement = ExpressionStatement::new(trigger_token, expr);
+    fn parse_expression_statement(&mut self) -> Result<ExpressionStatement, ParserError> {
+        if self.current_token.is_none() {
+            return Err(ParserError::WhereIsEverybody);
+        }
+
+        let expr_statement = ExpressionStatement::new(
+            self.current_token.clone().expect("checked before"),
+            self.parse_expression(Precedence::Lowest)?,
+        );
 
         Ok(expr_statement)
     }
 
     fn parse_expression(
         &mut self,
-        token: Token,
         precedence: Precedence,
     ) -> Result<Box<dyn Expression>, ParserError> {
-        let left_expr = match token {
-            Token::Identifier(_) => self.parse_identifier(token)?,
+        if self.current_token.is_none() {
+            return Err(ParserError::WhereIsEverybody);
+        }
+
+        let left_expr = match self.current_token.clone().expect("checked before") {
+            Token::Identifier(_) => self.parse_identifier()?,
             _ => todo!(),
         };
 
         Ok(Box::new(left_expr))
     }
 
-    fn parse_identifier(&mut self, token: Token) -> Result<Identifier, ParserError> {
-        if !matches!(token, Token::Identifier(_)) {
+    fn parse_identifier(&mut self) -> Result<Identifier, ParserError> {
+        if !matches!(self.current_token, Some(Token::Identifier(_))) {
             return Err(ParserError::IWantThisNotThat {
                 expected: Token::Identifier("<name placeholder>".to_string()),
-                actual: token,
+                actual: self.current_token.clone(),
             });
         }
 
-        Ok(Identifier::new(token))
+        Ok(Identifier::new(
+            self.current_token.clone().expect("checked before"),
+        ))
     }
 
     /// Parses a return statement
-    ///
-    /// `trigger_token` - The token that triggered the parsing of the return statement. So must be Token::Return.
-    fn parse_return_statement(
-        &mut self,
-        trigger_token: Token,
-    ) -> Result<ReturnStatement, ParserError> {
-        if trigger_token != Token::Return {
+    fn parse_return_statement(&mut self) -> Result<ReturnStatement, ParserError> {
+        if self.current_token != Some(Token::Return) {
             return Err(ParserError::IWantThisNotThat {
                 expected: Token::Return,
-                actual: trigger_token,
+                actual: self.current_token.clone(),
             });
         }
+        let return_token = self.current_token.take().expect("checked before");
+        self.next_token();
 
         // Skip value for now
         // TODO: parse expression
@@ -130,24 +141,24 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(ReturnStatement::new(trigger_token))
+        Ok(ReturnStatement::new(return_token))
     }
 
     /// Parses a let statement
-    ///
-    /// `trigger_token` - The token that triggered the parsing of the let statement. So must be Token::Let.
-    fn parse_let_statement(&mut self, trigger_token: Token) -> Result<LetStatement, ParserError> {
-        if trigger_token != Token::Let {
+    fn parse_let_statement(&mut self) -> Result<LetStatement, ParserError> {
+        if self.current_token != Some(Token::Let) {
             return Err(ParserError::IWantThisNotThat {
                 expected: Token::Let,
-                actual: trigger_token,
+                actual: self.current_token.clone(),
             });
         }
+        let let_token = self.current_token.take().expect("checked before");
+        self.next_token();
 
-        self.expect_next_token_fn(|t| matches!(t, &Token::Identifier(_)))?;
-        let identifier_token = self.current_token.take().expect("expected identifier");
-        let identifier = self.parse_identifier(identifier_token)?;
-        self.expect_next_token(Token::Equals)?;
+        let identifier = self.parse_identifier()?;
+
+        self.expect_peek_token(Token::Equals)?;
+        self.next_token();
 
         // Skip value for now
         // TODO: parse expression
@@ -155,47 +166,40 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(LetStatement::new(trigger_token, identifier))
+        Ok(LetStatement::new(let_token, identifier))
     }
 
-    /// Populates the current token with the next token from the lexer.
+    /// Populates the current token and the peek token.
     /// Advances the lexer to the next token.
     fn next_token(&mut self) {
-        self.current_token = self.lexer.next();
+        self.current_token = self.peek_token.take();
+        self.peek_token = self.lexer.next();
     }
 
-    /// Sets `parser.current_token` to the next token if it matches the `expected_token`, otherwise returns an error.
-    /// Advances the lexer to the next token.
+    /// Checks if the peek token matches the expected token.
     ///
     /// Generally, it's better to use this method instead of `expect_next_token_fn` as it produces a more descriptive error message.
-    fn expect_next_token(&mut self, expected_token: Token) -> Result<(), ParserError> {
-        match self.lexer.next() {
-            Some(token) if token == expected_token => {
-                self.current_token = Some(token);
-                Ok(())
-            }
+    fn expect_peek_token(&mut self, expected_token: Token) -> Result<(), ParserError> {
+        match &self.peek_token {
+            Some(token) if token == &expected_token => Ok(()),
             Some(token) => Err(ParserError::IWantThisNotThat {
                 expected: expected_token,
-                actual: token,
+                actual: Some(token.clone()),
             }),
             None => Err(ParserError::WhyNothingIfIWantThis(expected_token)),
         }
     }
 
-    /// Sets `parser.current_token` to the next token if it matches the `predicate`, otherwise returns an error.
-    /// Advances the lexer to the next token.
+    /// Checks if the peek token matches the predicate.
     ///
     /// Use `expect_next_token` if equality check is all you need.
-    fn expect_next_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
+    fn expect_peek_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
     where
         F: Fn(&Token) -> bool,
     {
-        match self.lexer.next() {
-            Some(token) if predicate(&token) => {
-                self.current_token = Some(token);
-                Ok(())
-            }
-            Some(token) => Err(ParserError::IDontWantThis(token)),
+        match &self.peek_token {
+            Some(token) if predicate(&token) => Ok(()),
+            Some(token) => Err(ParserError::IDontWantThis(token.clone())),
             None => Err(ParserError::WhereIsEverybody),
         }
     }
@@ -232,23 +236,27 @@ mod tests {
     }
 
     #[test]
-    fn test_expect_next_token() {
+    fn test_expect_peek_token() {
         let lexer = Lexer::new("let x = 5".to_string());
         let mut parser = Parser::new(lexer);
+
+        println!("{parser:?}");
+
         parser
-            .expect_next_token_fn(|token| token == &Token::Identifier("x".to_string()))
+            .expect_peek_token_fn(|token| token == &Token::Identifier("x".to_string()))
             .unwrap();
-        assert_eq!(
-            parser.current_token,
-            Some(Token::Identifier("x".to_string()))
-        );
-        parser.expect_next_token(Token::Equals).unwrap();
-        assert_eq!(parser.current_token, Some(Token::Equals));
+        assert_eq!(parser.peek_token, Some(Token::Identifier("x".to_string())));
+        parser.next_token();
+
+        parser.expect_peek_token(Token::Equals).unwrap();
+        assert_eq!(parser.peek_token, Some(Token::Equals));
+        parser.next_token();
+
         parser
-            .expect_next_token_fn(|token| token == &Token::Integer(5))
+            .expect_peek_token_fn(|token| token == &Token::Integer(5))
             .unwrap();
-        assert_eq!(parser.current_token, Some(Token::Integer(5)));
-        if let Ok(()) = parser.expect_next_token(Token::If) {
+        assert_eq!(parser.peek_token, Some(Token::Integer(5)));
+        if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
         }
     }
@@ -258,10 +266,10 @@ mod tests {
     //     let lexer = Lexer::new("name variable".to_string());
     //     let mut parser = Parser::new(lexer);
     //     let stmt = parser.parse_statement().unwrap();
-    //     assert_identifier(stmt, "name");
+    //     assert_identifier(expr_stmt.expression, "name");
     //     parser.next_token();
     //     let stmt = parser.parse_statement().unwrap();
-    //     assert_identifier(stmt, "variable");
+    //     assert_identifier(expr_stmt.expression, "variable");
     // }
 
     #[test]
@@ -302,7 +310,13 @@ mod tests {
         match parser.parse() {
             Err(errors) => {
                 assert_eq!(errors.len(), 1);
-                assert_eq!(errors[0], ParserError::WhereIsEverybody)
+                assert_eq!(
+                    errors[0],
+                    ParserError::IWantThisNotThat {
+                        expected: Token::Identifier("<name placeholder>".to_string()),
+                        actual: None
+                    }
+                )
             }
             _ => panic!("expected to fail"),
         };
@@ -311,7 +325,13 @@ mod tests {
         match parser.parse() {
             Err(errors) => {
                 assert_eq!(errors.len(), 1);
-                assert_eq!(errors[0], ParserError::IDontWantThis(Token::Integer(13)))
+                assert_eq!(
+                    errors[0],
+                    ParserError::IWantThisNotThat {
+                        expected: Token::Identifier("<name placeholder>".to_string()),
+                        actual: Some(Token::Integer(13))
+                    }
+                )
             }
             _ => panic!("expected to fail"),
         };
@@ -333,7 +353,7 @@ mod tests {
                     errors[0],
                     ParserError::IWantThisNotThat {
                         expected: Token::Equals,
-                        actual: Token::Integer(13)
+                        actual: Some(Token::Integer(13))
                     }
                 )
             }
