@@ -1,21 +1,25 @@
 use crate::lexer::Token;
 
-use super::{Identifier, Node, Statement};
+use super::{Expression, Identifier, Node, Statement};
 
 /// Let statement ast node.
-#[derive(Debug, PartialEq)]
+#[derive(Debug)]
 pub struct LetStatement {
     pub token: Token,
     pub identifier: Identifier,
-    // TODO: add expression value
+    pub value: Box<dyn Expression>,
 }
 
 impl LetStatement {
     /// Creates a let statement node.
     /// Asserts that the token is a `Token::Let`.
-    pub fn new(token: Token, identifier: Identifier) -> Self {
+    pub fn new(token: Token, identifier: Identifier, value: Box<dyn Expression>) -> Self {
         assert_eq!(token, Token::Let, "expected let token");
-        LetStatement { token, identifier }
+        LetStatement {
+            token,
+            identifier,
+            value,
+        }
     }
 }
 
@@ -25,6 +29,7 @@ impl ToString for LetStatement {
 
         out.push_str(&self.identifier.to_string());
         out.push_str(" = ");
+        out.push_str(&self.value.to_string());
 
         out
     }

@@ -182,17 +182,18 @@ impl Parser {
         self.next_token();
 
         let identifier = self.parse_identifier()?;
-
-        self.expect_peek_token(Token::Equals)?;
         self.next_token();
 
-        // Skip value for now
-        // TODO: parse expression
-        while !matches!(self.current_token, Some(Token::SemiColon)) {
+        self.expect_current_token(Token::Equals)?;
+        self.next_token();
+
+        let value = self.parse_expression(Precedence::Lowest)?;
+
+        if self.peek_token == Some(Token::SemiColon) {
             self.next_token();
         }
 
-        Ok(LetStatement::new(let_token, identifier))
+        Ok(LetStatement::new(let_token, identifier, value))
     }
 
     /// Populates the current token and the peek token.
@@ -405,10 +406,10 @@ mod tests {
         let lexer = Lexer::new("let x = 5; let y = 10;".to_string());
         let mut parser = Parser::new(lexer);
         let stmt = parser.parse_statement().unwrap();
-        assert_let_statement(stmt, "x");
+        assert_let_statement(stmt, "x", "5");
         parser.next_token();
         let stmt = parser.parse_statement().unwrap();
-        assert_let_statement(stmt, "y");
+        assert_let_statement(stmt, "y", "10");
     }
 
     #[test]
@@ -478,7 +479,11 @@ mod tests {
         }
     }
 
-    fn assert_let_statement(stmt: Box<dyn Statement>, expected_identifier: &str) {
+    fn assert_let_statement(
+        stmt: Box<dyn Statement>,
+        expected_identifier: &str,
+        expected_value: &str,
+    ) {
         if let Some(let_stmt) = stmt.as_any().downcast_ref::<LetStatement>() {
             assert_eq!(let_stmt.token, Token::Let);
             assert_identifier(
@@ -487,6 +492,7 @@ mod tests {
                 ))),
                 expected_identifier,
             );
+            assert_eq!(let_stmt.value.to_string(), expected_value.to_string())
         } else {
             panic!("expected LetStatement node");
         }
