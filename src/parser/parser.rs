@@ -70,6 +70,7 @@ impl Parser {
     /// Calling this function takes the current token.
     fn parse_statement(&mut self) -> Result<Box<dyn Statement>, ParserError> {
         if let Some(ref token) = self.current_token {
+            println!("{token:?}");
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement()?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement()?)),
@@ -87,16 +88,16 @@ impl Parser {
             return Err(ParserError::WhereIsEverybody);
         }
 
-        let token = self.current_token.clone().expect("checked before");
-        let expr = self.parse_expression(Precedence::Lowest)?;
-        let expr_statement = ExpressionStatement::new(token, expr);
-
-        Ok(expr_statement)
+        Ok(ExpressionStatement::new(
+            // clone token as it will be consumed by the expression parser
+            self.current_token.clone().expect("checked before"),
+            self.parse_expression(Precedence::Lowest)?,
+        ))
     }
 
     fn parse_expression(
         &mut self,
-        precedence: Precedence,
+        _precedence: Precedence,
     ) -> Result<Box<dyn Expression>, ParserError> {
         if self.current_token.is_none() {
             return Err(ParserError::WhereIsEverybody);
@@ -110,15 +111,13 @@ impl Parser {
         Ok(Box::new(left_expr))
     }
 
+    /// Parses an identifier.
+    ///
+    /// Takes the current token and returns an Identifier.
     fn parse_identifier(&mut self) -> Result<Identifier, ParserError> {
-        if !matches!(self.current_token, Some(Token::Identifier(_))) {
-            return Err(ParserError::IWantThisNotThat {
-                expected: Token::Identifier("<name placeholder>".to_string()),
-                actual: self.current_token.clone(),
-            });
-        }
+        self.expect_current_token_fn(|t| matches!(t, &Token::Identifier(_)))?;
 
-        let token = self.current_token.clone().expect("checked before");
+        let token = self.current_token.take().expect("checked before");
         let identifier = Identifier::new(token);
 
         Ok(identifier)
@@ -126,12 +125,7 @@ impl Parser {
 
     /// Parses a return statement
     fn parse_return_statement(&mut self) -> Result<ReturnStatement, ParserError> {
-        if self.current_token != Some(Token::Return) {
-            return Err(ParserError::IWantThisNotThat {
-                expected: Token::Return,
-                actual: self.current_token.clone(),
-            });
-        }
+        self.expect_current_token(Token::Return)?;
         let return_token = self.current_token.take().expect("checked before");
         self.next_token();
 
@@ -146,12 +140,7 @@ impl Parser {
 
     /// Parses a let statement
     fn parse_let_statement(&mut self) -> Result<LetStatement, ParserError> {
-        if !matches!(self.current_token, Some(Token::Let)) {
-            return Err(ParserError::IWantThisNotThat {
-                expected: Token::Let,
-                actual: self.current_token.clone(),
-            });
-        }
+        self.expect_current_token(Token::Let)?;
         let let_token = self.current_token.take().expect("checked before");
         self.next_token();
 
@@ -190,9 +179,32 @@ impl Parser {
         }
     }
 
+    fn expect_current_token(&mut self, expected_token: Token) -> Result<(), ParserError> {
+        match &self.current_token {
+            Some(token) if token == &expected_token => Ok(()),
+            Some(token) => Err(ParserError::IWantThisNotThat {
+                expected: expected_token,
+                actual: Some(token.clone()),
+            }),
+            None => Err(ParserError::WhyNothingIfIWantThis(expected_token)),
+        }
+    }
+
+    fn expect_current_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
+    where
+        F: Fn(&Token) -> bool,
+    {
+        match &self.current_token {
+            Some(token) if predicate(token) => Ok(()),
+            Some(token) => Err(ParserError::IDontWantThis(token.clone())),
+            None => Err(ParserError::WhereIsEverybody),
+        }
+    }
+
     /// Checks if the peek token matches the predicate.
     ///
     /// Use `expect_next_token` if equality check is all you need.
+    #[allow(unused)]
     fn expect_peek_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
     where
         F: Fn(&Token) -> bool,
@@ -261,16 +273,26 @@ mod tests {
         }
     }
 
-    // #[test]
-    // fn test_parse_identifier() {
-    //     let lexer = Lexer::new("name variable".to_string());
-    //     let mut parser = Parser::new(lexer);
-    //     let stmt = parser.parse_statement().unwrap();
-    //     assert_identifier(expr_stmt.expression, "name");
-    //     parser.next_token();
-    //     let stmt = parser.parse_statement().unwrap();
-    //     assert_identifier(expr_stmt.expression, "variable");
-    // }
+    #[test]
+    fn test_parse_identifier() {
+        let lexer = Lexer::new("name variable".to_string());
+        let mut parser = Parser::new(lexer);
+
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "name");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "variable");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
     #[test]
     fn test_parse_let_statement() {
@@ -294,72 +316,45 @@ mod tests {
         assert_return_statement(stmt);
     }
 
-    // #[test]
-    // fn test_parser_errors() {
-    //     let lexer = Lexer::new("№".to_string());
-    //     let mut parser = Parser::new(lexer);
-    //     match parser.parse() {
-    //         Err(errors) => {
-    //             assert_eq!(errors.len(), 1);
-    //             assert_eq!(errors[0], ParserError::IDontWantThis(Token::ILLEGAL('№')))
-    //         }
-    //         _ => panic!("expected to fail"),
-    //     };
-    //     let lexer = Lexer::new("let".to_string());
-    //     let mut parser = Parser::new(lexer);
-    //     match parser.parse() {
-    //         Err(errors) => {
-    //             assert_eq!(errors.len(), 1);
-    //             assert_eq!(
-    //                 errors[0],
-    //                 ParserError::IWantThisNotThat {
-    //                     expected: Token::Identifier("<name placeholder>".to_string()),
-    //                     actual: None
-    //                 }
-    //             )
-    //         }
-    //         _ => panic!("expected to fail"),
-    //     };
-    //     let lexer = Lexer::new("let 13".to_string());
-    //     let mut parser = Parser::new(lexer);
-    //     match parser.parse() {
-    //         Err(errors) => {
-    //             assert_eq!(errors.len(), 1);
-    //             assert_eq!(
-    //                 errors[0],
-    //                 ParserError::IWantThisNotThat {
-    //                     expected: Token::Identifier("<name placeholder>".to_string()),
-    //                     actual: Some(Token::Integer(13))
-    //                 }
-    //             )
-    //         }
-    //         _ => panic!("expected to fail"),
-    //     };
-    //     let lexer = Lexer::new("let what".to_string());
-    //     let mut parser = Parser::new(lexer);
-    //     match parser.parse() {
-    //         Err(errors) => {
-    //             assert_eq!(errors.len(), 1);
-    //             assert_eq!(errors[0], ParserError::WhyNothingIfIWantThis(Token::Equals))
-    //         }
-    //         _ => panic!("expected to fail"),
-    //     };
-    //     let lexer = Lexer::new("let what 13".to_string());
-    //     let mut parser = Parser::new(lexer);
-    //     match parser.parse() {
-    //         Err(errors) => {
-    //             assert_eq!(errors.len(), 1);
-    //             assert_eq!(
-    //                 errors[0],
-    //                 ParserError::IWantThisNotThat {
-    //                     expected: Token::Equals,
-    //                     actual: Some(Token::Integer(13))
-    //                 }
-    //             )
-    //         }
-    //         _ => panic!("expected to fail"),
-    //     };
-    // }
+    #[test]
+    fn test_parser_errors() {
+        let lexer = Lexer::new("№".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::IDontWantThis(Token::ILLEGAL('№')))
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::WhereIsEverybody)
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let 13".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::IDontWantThis(Token::Integer(13)))
+            }
+            _ => panic!("expected to fail"),
+        };
+        let lexer = Lexer::new("let what".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::WhyNothingIfIWantThis(Token::Equals))
+            }
+            _ => panic!("expected to fail"),
+        };
+    }
 
     fn assert_identifier(node: Box<dyn Expression>, expected: &str) {
         if let Some(ident) = node.as_any().downcast_ref::<Identifier>() {
