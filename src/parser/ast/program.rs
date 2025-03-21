@@ -34,3 +34,27 @@ impl Node for Program {
         self
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Token;
+    use crate::parser::{Boolean, ExpressionStatement, Integer, ReturnStatement};
+
+    #[test]
+    fn test_program() {
+        let mut program = Program::new();
+        program.push_statement(Box::new(ExpressionStatement::new(
+            Token::Integer(5),
+            Box::new(Integer::new(Token::Integer(5))),
+        )));
+        program.push_statement(Box::new(ReturnStatement::new(
+            Token::Return,
+            Box::new(Boolean::new(Token::True)),
+        )));
+
+        assert_eq!(program.statements.len(), 2);
+        assert_eq!(program.token_literal(), "");
+        assert_eq!(program.to_string(), "5\nreturn true")
+    }
+}

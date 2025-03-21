@@ -35,3 +35,18 @@ impl Node for Boolean {
 }
 
 impl Expression for Boolean {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_boolean_node() {
+        let token = Token::True;
+        let boolean = Boolean::new(token.clone());
+
+        assert_eq!(boolean.token, token);
+        assert_eq!(boolean.to_string(), token.literal());
+        assert_eq!(boolean.token_literal(), token.literal());
+    }
+}

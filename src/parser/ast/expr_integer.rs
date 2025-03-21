@@ -35,3 +35,18 @@ impl Node for Integer {
 }
 
 impl Expression for Integer {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_integer_node() {
+        let token = Token::Integer(42);
+        let integer = Integer::new(token.clone());
+
+        assert_eq!(integer.token, token);
+        assert_eq!(integer.to_string(), token.literal());
+        assert_eq!(integer.token_literal(), token.literal());
+    }
+}

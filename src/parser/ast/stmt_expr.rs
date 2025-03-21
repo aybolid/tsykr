@@ -33,3 +33,23 @@ impl Node for ExpressionStatement {
 }
 
 impl Statement for ExpressionStatement {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Token;
+    use crate::parser::{Infixed, Integer};
+
+    #[test]
+    fn test_expression_statement() {
+        let token = Token::Minus;
+        let left = Box::new(Integer::new(Token::Integer(42)));
+        let right = Box::new(Integer::new(Token::Integer(42)));
+        let infixed = Infixed::new(token.clone(), left, right);
+        let expression_statement = ExpressionStatement::new(token.clone(), Box::new(infixed));
+
+        assert_eq!(expression_statement.token, token);
+        assert_eq!(expression_statement.expression.to_string(), "(42-42)");
+        assert_eq!(expression_statement.token_literal(), token.literal());
+    }
+}

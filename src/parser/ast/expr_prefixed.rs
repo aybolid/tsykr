@@ -41,3 +41,21 @@ impl Node for Prefixed {
 }
 
 impl Expression for Prefixed {}
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::Integer;
+
+    use super::*;
+
+    #[test]
+    fn test_prefixed_node() {
+        let token = Token::Minus;
+        let right = Box::new(Integer::new(Token::Integer(42)));
+        let prefixed = Prefixed::new(token.clone(), right);
+
+        assert_eq!(prefixed.op, token);
+        assert_eq!(prefixed.to_string(), "(-42)");
+        assert_eq!(prefixed.token_literal(), token.literal());
+    }
+}

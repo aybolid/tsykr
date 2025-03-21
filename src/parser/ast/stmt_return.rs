@@ -38,3 +38,20 @@ impl Node for ReturnStatement {
 }
 
 impl Statement for ReturnStatement {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::parser::Boolean;
+
+    #[test]
+    fn test_return_statement() {
+        let token = Token::Return;
+        let bool = Boolean::new(Token::True);
+
+        let stmt = ReturnStatement::new(token.clone(), Box::new(bool));
+
+        assert_eq!(stmt.token_literal(), token.literal());
+        assert_eq!(stmt.to_string(), "return true");
+    }
+}

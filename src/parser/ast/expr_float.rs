@@ -35,3 +35,18 @@ impl Node for Float {
 }
 
 impl Expression for Float {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_float_node() {
+        let token = Token::Float(2.23);
+        let float = Float::new(token.clone());
+
+        assert_eq!(float.token, token);
+        assert_eq!(float.to_string(), token.literal());
+        assert_eq!(float.token_literal(), token.literal());
+    }
+}

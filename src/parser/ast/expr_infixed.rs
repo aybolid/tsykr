@@ -40,3 +40,22 @@ impl Node for Infixed {
 }
 
 impl Expression for Infixed {}
+
+#[cfg(test)]
+mod tests {
+    use crate::parser::Integer;
+
+    use super::*;
+
+    #[test]
+    fn test_infixed_node() {
+        let token = Token::Minus;
+        let left = Box::new(Integer::new(Token::Integer(42)));
+        let right = Box::new(Integer::new(Token::Integer(42)));
+        let infixed = Infixed::new(token.clone(), left, right);
+
+        assert_eq!(infixed.op, token);
+        assert_eq!(infixed.to_string(), "(42-42)");
+        assert_eq!(infixed.token_literal(), token.literal());
+    }
+}

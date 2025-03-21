@@ -38,3 +38,18 @@ impl Node for Identifier {
 }
 
 impl Expression for Identifier {}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_identifier_node() {
+        let token = Token::Identifier("cool".to_string());
+        let ident = Identifier::new(token.clone());
+
+        assert_eq!(ident.token, token);
+        assert_eq!(ident.to_string(), token.literal());
+        assert_eq!(ident.token_literal(), token.literal());
+    }
+}
