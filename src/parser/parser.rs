@@ -114,27 +114,28 @@ impl Parser {
                 Token::True | Token::False => Box::new(self.parse_boolean()?),
                 Token::Bang | Token::Minus => Box::new(self.parse_prefixed_expression()?),
 
-                t => return Err(ParserError::IDontWantThis(t.clone())),
+                other_token => return Err(ParserError::IDontWantThis(other_token.clone())),
             };
 
         while self.peek_token != Some(Token::SemiColon)
             && self.peek_token.is_some()
             && precedence < Precedence::from_token(self.peek_token.clone().expect("checked before"))
         {
-            let infix_expr: Option<Box<dyn Expression>> =
-                match self.peek_token.as_ref().expect("checked before") {
-                    _ => {
-                        self.next_token();
-                        Some(Box::new(self.parse_infixed_expression(expr)?))
-                    }
-                };
-
-            match infix_expr {
-                Some(infix_expr) => {
-                    expr = infix_expr;
+            match self.peek_token.as_ref().expect("checked before") {
+                Token::Plus
+                | Token::Minus
+                | Token::Slash
+                | Token::Asterisk
+                | Token::LessThan
+                | Token::LessThanEquals
+                | Token::GreaterThan
+                | Token::GreaterThanEquals
+                | Token::EqualsEquals
+                | Token::BangEquals => {
+                    self.next_token();
+                    expr = Box::new(self.parse_infixed_expression(expr)?);
                 }
-                // None => return Ok(expr),
-                None => unreachable!(),
+                _ => return Ok(expr),
             };
         }
 
