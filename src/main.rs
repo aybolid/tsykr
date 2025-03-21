@@ -22,14 +22,16 @@ fn main() -> Result<()> {
             match parser.parse() {
                 Ok(program) => {
                     println!("{program:#?}");
-                    println!("Reconstructed program from ast:");
+                    println!("Reconstructed AST:");
                     println!("{}", program.to_string());
+                    println!()
                 }
                 Err(errs) => {
-                    println!("Parser errors:");
+                    eprintln!("Parser errors:");
                     for err in errs {
                         eprintln!("\t{err}");
                     }
+                    eprintln!()
                 }
             }
         }
