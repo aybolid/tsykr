@@ -18,10 +18,20 @@ fn main() -> Result<()> {
         Some(path) => {
             let content = std::fs::read_to_string(path)?;
             let lexer = Lexer::new(content);
-            for token in lexer {
-                print!("{:?} ", token);
+            let mut parser = parser::Parser::new(lexer);
+            match parser.parse() {
+                Ok(program) => {
+                    println!("{program:#?}");
+                    println!("Reconstructed program from ast:");
+                    println!("{}", program.to_string());
+                }
+                Err(errs) => {
+                    println!("Parser errors:");
+                    for err in errs {
+                        eprintln!("\t{err}");
+                    }
+                }
             }
-            println!()
         }
         None => {
             repl::run();
