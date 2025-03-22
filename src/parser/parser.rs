@@ -106,12 +106,12 @@ impl Parser {
 
     /// Parses a function declaration statement.
     fn parse_function_declaration_statement(&mut self) -> Result<FunctionDeclaration, ParserError> {
-        self.expect_current_token_kind(TokenKind::Function)?;
+        self.expect_token_kind(&self.current_token, TokenKind::Function)?;
         let fn_token = self.current_token.take().expect("checked before");
         self.next_token();
 
         let identifier = self.parse_identifier()?;
-        self.expect_peek_token_kind(TokenKind::LeftParen)?;
+        self.expect_token_kind(&self.peek_token, TokenKind::LeftParen)?;
         self.next_token();
 
         let params = self.parse_function_parameters()?;
@@ -124,7 +124,7 @@ impl Parser {
 
     /// Parses a block statement.
     fn parse_block_statement(&mut self) -> Result<Block, ParserError> {
-        self.expect_current_token_kind(TokenKind::LeftCurly)?;
+        self.expect_token_kind(&self.current_token, TokenKind::LeftCurly)?;
         let block_start_token = self.current_token.take().expect("checked before");
         self.next_token();
 
@@ -141,14 +141,14 @@ impl Parser {
             self.next_token();
         }
 
-        self.expect_current_token_kind(TokenKind::RightCurly)?;
+        self.expect_token_kind(&self.current_token, TokenKind::RightCurly)?;
 
         Ok(Block::new(block_start_token, statements))
     }
 
     /// Parses a function parameters.
     fn parse_function_parameters(&mut self) -> Result<Vec<Identifier>, ParserError> {
-        self.expect_current_token_kind(TokenKind::LeftParen)?;
+        self.expect_token_kind(&self.current_token, TokenKind::LeftParen)?;
         let mut params = vec![];
 
         if self
@@ -178,7 +178,7 @@ impl Parser {
             params.push(ident);
         }
 
-        self.expect_peek_token_kind(TokenKind::RightParen)?;
+        self.expect_token_kind(&self.peek_token, TokenKind::RightParen)?;
         self.next_token();
 
         Ok(params)
@@ -267,7 +267,7 @@ impl Parser {
         &mut self,
         callee: Box<dyn Expression>,
     ) -> Result<FunctionCall, ParserError> {
-        self.expect_current_token_kind(TokenKind::LeftParen)?;
+        self.expect_token_kind(&self.current_token, TokenKind::LeftParen)?;
         let call_token = self.current_token.take().expect("checked before");
         let arguments = self.parse_expression_list(TokenKind::RightParen)?;
 
@@ -306,18 +306,18 @@ impl Parser {
             list.push(self.parse_expression(Precedence::Lowest)?);
         }
 
-        self.expect_peek_token_kind(TokenKind::RightParen)?;
+        self.expect_token_kind(&self.peek_token, end_token_kind)?;
         self.next_token();
 
         Ok(list)
     }
 
     fn parse_function_expression(&mut self) -> Result<FunctionExpression, ParserError> {
-        self.expect_current_token_kind(TokenKind::Function)?;
+        self.expect_token_kind(&self.current_token, TokenKind::Function)?;
         let fn_token = self.current_token.take().expect("checked before");
         self.next_token();
 
-        self.expect_current_token_kind(TokenKind::LeftParen)?;
+        self.expect_token_kind(&self.current_token, TokenKind::LeftParen)?;
         let params = self.parse_function_parameters()?;
         self.next_token();
 
@@ -328,10 +328,10 @@ impl Parser {
 
     /// Parses a grouped expression (wrapped in parentheses).
     fn parse_grouped_expression(&mut self) -> Result<Box<dyn Expression>, ParserError> {
-        self.expect_current_token_kind(TokenKind::LeftParen)?;
+        self.expect_token_kind(&self.current_token, TokenKind::LeftParen)?;
         self.next_token();
         let expr = self.parse_expression(Precedence::Lowest)?;
-        self.expect_peek_token_kind(TokenKind::RightParen)?;
+        self.expect_token_kind(&self.peek_token, TokenKind::RightParen)?;
         self.next_token();
         Ok(expr)
     }
@@ -349,7 +349,9 @@ impl Parser {
 
     /// Parses a prefixed expression.
     fn parse_prefixed_expression(&mut self) -> Result<Prefixed, ParserError> {
-        self.expect_current_token_fn(|t| matches!(t.kind, TokenKind::Bang | TokenKind::Minus))?;
+        self.expect_token_fn(&self.current_token, |t| {
+            matches!(t.kind, TokenKind::Bang | TokenKind::Minus)
+        })?;
         let op_token = self.current_token.take().expect("checked before");
         self.next_token();
         Ok(Prefixed::new(
@@ -362,7 +364,9 @@ impl Parser {
     ///
     /// Takes the current token and returns a Boolean.
     fn parse_boolean(&mut self) -> Result<Boolean, ParserError> {
-        self.expect_current_token_fn(|t| matches!(t.kind, TokenKind::True | TokenKind::False))?;
+        self.expect_token_fn(&self.current_token, |t| {
+            matches!(t.kind, TokenKind::True | TokenKind::False)
+        })?;
         Ok(Boolean::new(
             self.current_token.take().expect("checked before"),
         ))
@@ -372,7 +376,9 @@ impl Parser {
     ///
     /// Takes the current token and returns a Float.
     fn parse_float(&mut self) -> Result<Float, ParserError> {
-        self.expect_current_token_fn(|t| matches!(t.kind, TokenKind::Float(_)))?;
+        self.expect_token_fn(&self.current_token, |t| {
+            matches!(t.kind, TokenKind::Float(_))
+        })?;
         Ok(Float::new(
             self.current_token.take().expect("checked before"),
         ))
@@ -382,7 +388,9 @@ impl Parser {
     ///
     /// Takes the current token and returns an Integer.
     fn parse_integer(&mut self) -> Result<Integer, ParserError> {
-        self.expect_current_token_fn(|t| matches!(t.kind, TokenKind::Integer(_)))?;
+        self.expect_token_fn(&self.current_token, |t| {
+            matches!(t.kind, TokenKind::Integer(_))
+        })?;
         Ok(Integer::new(
             self.current_token.take().expect("checked before"),
         ))
@@ -392,7 +400,9 @@ impl Parser {
     ///
     /// Takes the current token and returns an Identifier.
     fn parse_identifier(&mut self) -> Result<Identifier, ParserError> {
-        self.expect_current_token_fn(|t| matches!(t.kind, TokenKind::Identifier(_)))?;
+        self.expect_token_fn(&self.current_token, |t| {
+            matches!(t.kind, TokenKind::Identifier(_))
+        })?;
         Ok(Identifier::new(
             self.current_token.take().expect("checked before"),
         ))
@@ -400,7 +410,7 @@ impl Parser {
 
     /// Parses a return statement
     fn parse_return_statement(&mut self) -> Result<ReturnStatement, ParserError> {
-        self.expect_current_token_kind(TokenKind::Return)?;
+        self.expect_token_kind(&self.current_token, TokenKind::Return)?;
         let return_token = self.current_token.take().expect("checked before");
         self.next_token();
 
@@ -420,14 +430,14 @@ impl Parser {
 
     /// Parses a let statement
     fn parse_let_statement(&mut self) -> Result<LetStatement, ParserError> {
-        self.expect_current_token_kind(TokenKind::Let)?;
+        self.expect_token_kind(&self.current_token, TokenKind::Let)?;
         let let_token = self.current_token.take().expect("checked before");
         self.next_token();
 
         let identifier = self.parse_identifier()?;
         self.next_token();
 
-        self.expect_current_token_kind(TokenKind::Equals)?;
+        self.expect_token_kind(&self.current_token, TokenKind::Equals)?;
         self.next_token();
 
         let value = self.parse_expression(Precedence::Lowest)?;
@@ -451,33 +461,15 @@ impl Parser {
         self.peek_token = self.lexer.next();
     }
 
-    /// Checks if the peek token matches the expected token kind.
-    ///
-    /// Generally, it's better to use this method instead of `expect_peek_token_fn` as it produces a more descriptive error message.
-    fn expect_peek_token_kind(
-        &mut self,
-        expected_token_kind: TokenKind,
-    ) -> Result<(), ParserError> {
-        match &self.peek_token {
-            Some(token) if token.kind == expected_token_kind => Ok(()),
-            Some(token) => Err(ParserError::UnexpectedToken {
-                expected: expected_token_kind,
-                actual: token.clone(),
-            }),
-            None => Err(ParserError::UnexpectedEOFWithExpectation(
-                expected_token_kind,
-            )),
-        }
-    }
-
     /// Checks if the current token matches the expected token kind.
     ///
-    /// Generally, it's better to use this method instead of `expect_current_token_fn` as it produces a more descriptive error message.
-    fn expect_current_token_kind(
-        &mut self,
+    /// Generally, it's better to use this method instead of `expect_token_fn` as it produces a more descriptive error message.
+    fn expect_token_kind(
+        &self,
+        to_check: &Option<Token>,
         expected_token_kind: TokenKind,
     ) -> Result<(), ParserError> {
-        match &self.current_token {
+        match to_check {
             Some(token) if token.kind == expected_token_kind => Ok(()),
             Some(token) => Err(ParserError::UnexpectedToken {
                 expected: expected_token_kind,
@@ -489,29 +481,14 @@ impl Parser {
         }
     }
 
-    /// Checks if the current token matches the predicate.
+    /// Checks if the token matches the predicate.
     ///
-    /// Use `expect_current_token_kind` if equality check is all you need.
-    fn expect_current_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
+    /// Use `expect_token_kind` if equality check is all you need.
+    fn expect_token_fn<F>(&self, to_check: &Option<Token>, predicate: F) -> Result<(), ParserError>
     where
         F: Fn(&Token) -> bool,
     {
-        match &self.current_token {
-            Some(token) if predicate(token) => Ok(()),
-            Some(token) => Err(ParserError::InvalidToken(token.clone())),
-            None => Err(ParserError::UnexpectedEOF),
-        }
-    }
-
-    /// Checks if the peek token matches the predicate.
-    ///
-    /// Use `expect_peek_token_kind` if equality check is all you need.
-    #[allow(unused)]
-    fn expect_peek_token_fn<F>(&mut self, predicate: F) -> Result<(), ParserError>
-    where
-        F: Fn(&Token) -> bool,
-    {
-        match &self.peek_token {
+        match to_check {
             Some(token) if predicate(token) => Ok(()),
             Some(token) => Err(ParserError::InvalidToken(token.clone())),
             None => Err(ParserError::UnexpectedEOF),
@@ -569,7 +546,9 @@ mod tests {
         println!("{parser:?}");
 
         parser
-            .expect_peek_token_fn(|token| matches!(token.kind, TokenKind::Identifier(_)))
+            .expect_token_fn(&parser.peek_token, |token| {
+                matches!(token.kind, TokenKind::Identifier(_))
+            })
             .unwrap();
         assert_eq!(
             parser.peek_token,
@@ -580,7 +559,9 @@ mod tests {
         );
         parser.next_token();
 
-        parser.expect_peek_token_kind(TokenKind::Equals).unwrap();
+        parser
+            .expect_token_kind(&parser.peek_token, TokenKind::Equals)
+            .unwrap();
         assert_eq!(
             parser.peek_token,
             Some(Token::new(TokenKind::Equals, Position(1, 7)))
@@ -588,13 +569,15 @@ mod tests {
         parser.next_token();
 
         parser
-            .expect_peek_token_fn(|token| matches!(token.kind, TokenKind::Integer(_)))
+            .expect_token_fn(&parser.peek_token, |token| {
+                matches!(token.kind, TokenKind::Integer(_))
+            })
             .unwrap();
         assert_eq!(
             parser.peek_token,
             Some(Token::new(TokenKind::Integer(5), Position(1, 9)))
         );
-        if let Ok(()) = parser.expect_peek_token_kind(TokenKind::If) {
+        if let Ok(()) = parser.expect_token_kind(&parser.peek_token, TokenKind::If) {
             panic!("expect_next_token should fail at this point");
         }
     }
