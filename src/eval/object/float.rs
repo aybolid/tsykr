@@ -1,16 +1,16 @@
 use super::{Object, ObjectKind};
 
-pub struct IntegerObject(i64);
+pub struct FloatObject(f64);
 
-impl IntegerObject {
-    pub fn new(value: i64) -> Self {
+impl FloatObject {
+    pub fn new(value: f64) -> Self {
         Self(value)
     }
 }
 
-impl Object for IntegerObject {
+impl Object for FloatObject {
     fn kind(&self) -> ObjectKind {
-        ObjectKind::INTEGER
+        ObjectKind::FLOAT
     }
 
     fn inspect(&self) -> String {

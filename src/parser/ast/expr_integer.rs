@@ -1,5 +1,5 @@
 use crate::{
-    eval::{self, Eval, EvalError, Object},
+    eval::{Eval, EvalError, IntegerObject, Object},
     lexer::{Token, TokenKind},
 };
 
@@ -43,7 +43,7 @@ impl Node for Integer {
 impl Eval for Integer {
     fn eval(&self) -> Result<Box<dyn Object>, EvalError> {
         match self.token.kind {
-            TokenKind::Integer(value) => Ok(Box::new(eval::Integer::new(value))),
+            TokenKind::Integer(value) => Ok(Box::new(IntegerObject::new(value))),
             _ => unreachable!(),
         }
     }
