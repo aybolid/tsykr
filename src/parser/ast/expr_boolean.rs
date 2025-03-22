@@ -1,5 +1,5 @@
 use crate::{
-    eval::{Eval, FALSE, TRUE},
+    eval::{Eval, ExecEnvironment, FALSE, TRUE},
     lexer::{Token, TokenKind},
 };
 
@@ -38,7 +38,10 @@ impl Node for Boolean {
 }
 
 impl Eval for Boolean {
-    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+    fn eval(
+        &self,
+        _env: &ExecEnvironment,
+    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
         match self.token.kind {
             TokenKind::True => Ok(Box::new(TRUE)),
             TokenKind::False => Ok(Box::new(FALSE)),
@@ -68,17 +71,18 @@ mod tests {
 
     #[test]
     fn test_boolean_eval() {
+        let env = ExecEnvironment::new();
         let token = Token::new(TokenKind::True, Position(0, 0));
         let boolean = Boolean::new(token);
 
-        let result = boolean.eval().unwrap();
+        let result = boolean.eval(&env).unwrap();
         assert_eq!(result.kind(), ObjectKind::BOOLEAN);
         assert_eq!(result.inspect(), "true");
 
         let token = Token::new(TokenKind::False, Position(0, 0));
         let boolean = Boolean::new(token);
 
-        let result = boolean.eval().unwrap();
+        let result = boolean.eval(&env).unwrap();
         assert_eq!(result.kind(), ObjectKind::BOOLEAN);
         assert_eq!(result.inspect(), "false");
     }

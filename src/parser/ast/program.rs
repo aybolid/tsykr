@@ -1,3 +1,5 @@
+use crate::eval::ExecEnvironment;
+
 use super::{Node, Statement};
 
 #[derive(Debug)]
@@ -15,8 +17,9 @@ impl Program {
     }
 
     pub fn eval_program(&self) {
+        let env = ExecEnvironment::new();
         for statement in &self.statements {
-            let result = statement.eval().unwrap();
+            let result = statement.eval(&env).unwrap();
             println!("{}", result.inspect())
         }
     }

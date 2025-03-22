@@ -1,5 +1,5 @@
 use crate::{
-    eval::{Eval, FloatObject},
+    eval::{Eval, EvalError, ExecEnvironment, FloatObject, Object},
     lexer::{Token, TokenKind},
 };
 
@@ -41,7 +41,7 @@ impl Node for Float {
 }
 
 impl Eval for Float {
-    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+    fn eval(&self, _env: &ExecEnvironment) -> Result<Box<dyn Object>, EvalError> {
         match self.token.kind {
             TokenKind::Float(value) => Ok(Box::new(FloatObject::new(value))),
             _ => unreachable!(),
@@ -70,10 +70,11 @@ mod tests {
 
     #[test]
     fn test_float_eval() {
+        let env = ExecEnvironment::new();
         let token = Token::new(TokenKind::Float(2.23), Position(0, 0));
         let float = Float::new(token.clone());
 
-        let result = float.eval().unwrap();
+        let result = float.eval(&env).unwrap();
         assert_eq!(result.kind(), ObjectKind::FLOAT)
     }
 }

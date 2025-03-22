@@ -1,5 +1,5 @@
 use crate::{
-    eval::Eval,
+    eval::{Eval, ExecEnvironment},
     lexer::{Token, TokenKind},
 };
 
@@ -41,7 +41,10 @@ impl Node for Identifier {
 }
 
 impl Eval for Identifier {
-    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+    fn eval(
+        &self,
+        _env: &ExecEnvironment,
+    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
         todo!()
     }
 }

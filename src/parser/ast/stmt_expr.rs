@@ -1,5 +1,5 @@
 use crate::{
-    eval::{Eval, EvalError, Object},
+    eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::Token,
 };
 
@@ -36,8 +36,8 @@ impl Node for ExpressionStatement {
 }
 
 impl Eval for ExpressionStatement {
-    fn eval(&self) -> Result<Box<dyn Object>, EvalError> {
-        self.expression.eval()
+    fn eval(&self, env: &ExecEnvironment) -> Result<Box<dyn Object>, EvalError> {
+        self.expression.eval(env)
     }
 }
 

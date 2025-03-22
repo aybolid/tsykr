@@ -1,4 +1,7 @@
-use crate::{eval::Eval, lexer::Token};
+use crate::{
+    eval::{Eval, ExecEnvironment},
+    lexer::Token,
+};
 
 use super::{Expression, Node};
 
@@ -40,7 +43,10 @@ impl Node for Infixed {
 }
 
 impl Eval for Infixed {
-    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+    fn eval(
+        &self,
+        _env: &ExecEnvironment,
+    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
         todo!()
     }
 }

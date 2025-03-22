@@ -1,6 +1,6 @@
 use super::{Block, Expression, Identifier, Node};
 use crate::{
-    eval::Eval,
+    eval::{Eval, ExecEnvironment},
     lexer::{Token, TokenKind},
 };
 
@@ -54,7 +54,10 @@ impl Node for FunctionExpression {
 }
 
 impl Eval for FunctionExpression {
-    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+    fn eval(
+        &self,
+        _env: &ExecEnvironment,
+    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
         todo!()
     }
 }
