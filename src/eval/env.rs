@@ -1,9 +1,9 @@
-use std::collections::HashMap;
+use std::{collections::HashMap, sync::Arc};
 
 use super::Object;
 
 pub struct ExecEnvironment {
-    store: HashMap<String, Box<dyn Object>>,
+    store: HashMap<String, Arc<dyn Object>>,
 }
 
 impl ExecEnvironment {
@@ -12,11 +12,11 @@ impl ExecEnvironment {
         Self { store }
     }
 
-    pub fn get(&self, key: &str) -> Option<&Box<dyn Object>> {
-        self.store.get(key)
+    pub fn get(&self, key: &str) -> Option<Arc<dyn Object>> {
+        self.store.get(key).cloned()
     }
 
-    pub fn set(&mut self, key: String, value: Box<dyn Object>) {
+    pub fn set(&mut self, key: String, value: Arc<dyn Object>) {
         self.store.insert(key, value);
     }
 }

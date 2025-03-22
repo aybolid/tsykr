@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, FloatObject, Object},
     lexer::{Token, TokenKind},
@@ -41,9 +43,9 @@ impl Node for Float {
 }
 
 impl Eval for Float {
-    fn eval(&self, _env: &ExecEnvironment) -> Result<Box<dyn Object>, EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
         match self.token.kind {
-            TokenKind::Float(value) => Ok(Box::new(FloatObject::new(value))),
+            TokenKind::Float(value) => Ok(Some(Arc::new(FloatObject::new(value)))),
             _ => unreachable!(),
         }
     }
@@ -70,11 +72,12 @@ mod tests {
 
     #[test]
     fn test_float_eval() {
-        let env = ExecEnvironment::new();
+        let mut env = ExecEnvironment::new();
         let token = Token::new(TokenKind::Float(2.23), Position(0, 0));
         let float = Float::new(token.clone());
 
-        let result = float.eval(&env).unwrap();
-        assert_eq!(result.kind(), ObjectKind::FLOAT)
+        let result = float.eval(&mut env).unwrap().unwrap();
+        assert_eq!(result.kind(), ObjectKind::FLOAT);
+        assert_eq!(result.inspect(), "2.23");
     }
 }

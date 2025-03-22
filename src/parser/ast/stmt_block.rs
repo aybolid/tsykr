@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use super::{Node, Statement};
 use crate::{
     eval::{Eval, ExecEnvironment},
@@ -47,8 +49,8 @@ impl Node for Block {
 impl Eval for Block {
     fn eval(
         &self,
-        _env: &ExecEnvironment,
-    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+        _env: &mut ExecEnvironment,
+    ) -> Result<Option<Arc<dyn crate::eval::Object>>, crate::eval::EvalError> {
         todo!()
     }
 }

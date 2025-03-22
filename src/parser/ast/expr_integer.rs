@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, IntegerObject, Object},
     lexer::{Token, TokenKind},
@@ -41,9 +43,9 @@ impl Node for Integer {
 }
 
 impl Eval for Integer {
-    fn eval(&self, _env: &ExecEnvironment) -> Result<Box<dyn Object>, EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
         match self.token.kind {
-            TokenKind::Integer(value) => Ok(Box::new(IntegerObject::new(value))),
+            TokenKind::Integer(value) => Ok(Some(Arc::new(IntegerObject::new(value)))),
             _ => unreachable!(),
         }
     }
@@ -70,12 +72,12 @@ mod tests {
 
     #[test]
     fn test_integer_evaluate() {
-        let env = ExecEnvironment::new();
+        let mut env = ExecEnvironment::new();
         let token = Token::new(TokenKind::Integer(42), Position(0, 0));
         let integer = Integer::new(token.clone());
 
-        let result = integer.eval(&env);
-        let obj = result.unwrap();
+        let result = integer.eval(&mut env);
+        let obj = result.unwrap().unwrap();
         assert_eq!(obj.kind(), ObjectKind::INTEGER);
         assert_eq!(obj.inspect(), "42");
     }

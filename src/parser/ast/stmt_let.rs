@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use crate::{
-    eval::{Eval, ExecEnvironment},
+    eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::{Token, TokenKind},
 };
 
@@ -50,11 +52,10 @@ impl Node for LetStatement {
 }
 
 impl Eval for LetStatement {
-    fn eval(
-        &self,
-        _env: &ExecEnvironment,
-    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
+        let value = (self.value.eval(env)?).expect("dont think its possible");
+        env.set(self.identifier.to_string(), value);
+        Ok(None)
     }
 }
 

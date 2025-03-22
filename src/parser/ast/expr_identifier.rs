@@ -1,5 +1,7 @@
+use std::sync::Arc;
+
 use crate::{
-    eval::{Eval, ExecEnvironment},
+    eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::{Token, TokenKind},
 };
 
@@ -41,11 +43,14 @@ impl Node for Identifier {
 }
 
 impl Eval for Identifier {
-    fn eval(
-        &self,
-        _env: &ExecEnvironment,
-    ) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
+        match env.get(&self.token.literal()) {
+            Some(obj) => Ok(Some(obj)),
+            None => Err(EvalError::UnknownIdentifier(
+                self.token.literal(),
+                self.token.position,
+            )),
+        }
     }
 }
 

@@ -1,5 +1,3 @@
-use std::time::Instant;
-
 use thiserror::Error;
 
 use crate::lexer::{Lexer, Token, TokenKind};
@@ -45,7 +43,6 @@ impl Parser {
     /// Parses a program.
     /// Returns a `Result` containing a `Program` or a vector of `ParserError`s.
     pub fn parse(&mut self) -> Result<Program, Vec<ParserError>> {
-        let start_time = Instant::now();
         let mut program = Program::new();
 
         let mut errors = vec![];
@@ -66,8 +63,6 @@ impl Parser {
         if !errors.is_empty() {
             return Err(errors);
         }
-
-        println!("Parsing took: {:.2?}", start_time.elapsed());
 
         Ok(program)
     }

@@ -1,3 +1,5 @@
+use std::sync::Arc;
+
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::Token,
@@ -36,7 +38,7 @@ impl Node for ExpressionStatement {
 }
 
 impl Eval for ExpressionStatement {
-    fn eval(&self, env: &ExecEnvironment) -> Result<Box<dyn Object>, EvalError> {
+    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
         self.expression.eval(env)
     }
 }
