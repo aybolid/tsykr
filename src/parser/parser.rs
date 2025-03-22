@@ -13,9 +13,9 @@ pub enum ParserError {
     #[error("Unexpected token: {0}")]
     IDontWantThis(Token),
     #[error("Unexpected token: wanted {expected} but found {actual}")]
-    IWantThisNotThat { expected: Token, actual: Token },
+    IWantThisNotThat { expected: TokenKind, actual: Token },
     #[error("Unexpected end of input but wanted {0}")]
-    WhyNothingIfIWantThis(Token),
+    WhyNothingIfIWantThis(TokenKind),
     #[error("Unexpected end of input")]
     WhereIsEverybody,
 }
@@ -448,31 +448,11 @@ impl Parser {
     ) -> Result<(), ParserError> {
         match &self.peek_token {
             Some(token) if token.kind == expected_token_kind => Ok(()),
-            Some(token) => {
-                // For error reporting, we need to create an example token with the expected kind
-                let expected_token = Token {
-                    kind: expected_token_kind,
-                    // Using dummy values for any data in the token kind
-                    ..token.clone()
-                };
-
-                Err(ParserError::IWantThisNotThat {
-                    expected: expected_token,
-                    actual: token.clone(),
-                })
-            }
-            None => {
-                // Create a token with the expected kind for error reporting
-                let expected_token = Token {
-                    kind: expected_token_kind,
-                    // We need to provide default values for any associated data
-                    // This depends on what data the Token struct contains
-                    // For simplicity, we'll create a default token here
-                    ..Token::default() // Assuming Token implements Default
-                };
-
-                Err(ParserError::WhyNothingIfIWantThis(expected_token))
-            }
+            Some(token) => Err(ParserError::IWantThisNotThat {
+                expected: expected_token_kind,
+                actual: token.clone(),
+            }),
+            None => Err(ParserError::WhyNothingIfIWantThis(expected_token_kind)),
         }
     }
 
@@ -485,31 +465,11 @@ impl Parser {
     ) -> Result<(), ParserError> {
         match &self.current_token {
             Some(token) if token.kind == expected_token_kind => Ok(()),
-            Some(token) => {
-                // For error reporting, we need to create an example token with the expected kind
-                let expected_token = Token {
-                    kind: expected_token_kind,
-                    // Using dummy values for any data in the token kind
-                    ..token.clone()
-                };
-
-                Err(ParserError::IWantThisNotThat {
-                    expected: expected_token,
-                    actual: token.clone(),
-                })
-            }
-            None => {
-                // Create a token with the expected kind for error reporting
-                let expected_token = Token {
-                    kind: expected_token_kind,
-                    // We need to provide default values for any associated data
-                    // This depends on what data the Token struct contains
-                    // For simplicity, we'll create a default token here
-                    ..Token::default() // Assuming Token implements Default
-                };
-
-                Err(ParserError::WhyNothingIfIWantThis(expected_token))
-            }
+            Some(token) => Err(ParserError::IWantThisNotThat {
+                expected: expected_token_kind,
+                actual: token.clone(),
+            }),
+            None => Err(ParserError::WhyNothingIfIWantThis(expected_token_kind)),
         }
     }
 
@@ -543,385 +503,390 @@ impl Parser {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::parser::{Expression, Node};
+#[cfg(test)]
+mod tests {
+    use crate::{lexer::Position, parser::Node};
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_new_parser() {
-//         let lexer = Lexer::new("let".to_string());
-//         let parser = Parser::new(lexer);
-//         assert_eq!(parser.current_token, Some(Token::Let))
-//     }
+    #[test]
+    fn test_new_parser() {
+        let lexer = Lexer::new("let".to_string());
+        let parser = Parser::new(lexer);
+        assert_eq!(
+            parser.current_token,
+            Some(Token::new(TokenKind::Let, Position(1, 1)))
+        )
+    }
 
-//     #[test]
-//     fn test_next_token() {
-//         let lexer = Lexer::new("let x = 5".to_string());
-//         let mut parser = Parser::new(lexer);
-//         parser.next_token();
-//         assert_eq!(
-//             parser.current_token,
-//             Some(Token::Identifier("x".to_string()))
-//         );
-//         parser.next_token();
-//         assert_eq!(parser.current_token, Some(Token::Equals));
-//         parser.next_token();
-//         assert_eq!(parser.current_token, Some(Token::Integer(5)));
-//         parser.next_token();
-//         assert_eq!(parser.current_token, None);
-//     }
+    #[test]
+    fn test_next_token() {
+        let lexer = Lexer::new("let x = 5".to_string());
+        let mut parser = Parser::new(lexer);
+        parser.next_token();
+        assert_eq!(
+            parser.current_token,
+            Some(Token::new(
+                TokenKind::Identifier("x".to_string()),
+                Position(1, 5)
+            ))
+        );
+        parser.next_token();
+        assert_eq!(
+            parser.current_token,
+            Some(Token::new(TokenKind::Equals, Position(1, 7)))
+        );
+        parser.next_token();
+        assert_eq!(
+            parser.current_token,
+            Some(Token::new(TokenKind::Integer(5), Position(1, 9)))
+        );
+        parser.next_token();
+        assert_eq!(parser.current_token, None);
+    }
 
-//     #[test]
-//     fn test_expect_peek_token() {
-//         let lexer = Lexer::new("let x = 5".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_expect_peek_token() {
+        let lexer = Lexer::new("let x = 5".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         println!("{parser:?}");
+        println!("{parser:?}");
 
-//         parser
-//             .expect_peek_token_fn(|token| token == &Token::Identifier("x".to_string()))
-//             .unwrap();
-//         assert_eq!(parser.peek_token, Some(Token::Identifier("x".to_string())));
-//         parser.next_token();
+        parser
+            .expect_peek_token_fn(|token| matches!(token.kind, TokenKind::Identifier(_)))
+            .unwrap();
+        assert_eq!(
+            parser.peek_token,
+            Some(Token::new(
+                TokenKind::Identifier("x".to_string()),
+                Position(1, 5)
+            ))
+        );
+        parser.next_token();
 
-//         parser.expect_peek_token(Token::Equals).unwrap();
-//         assert_eq!(parser.peek_token, Some(Token::Equals));
-//         parser.next_token();
+        parser.expect_peek_token_kind(TokenKind::Equals).unwrap();
+        assert_eq!(
+            parser.peek_token,
+            Some(Token::new(TokenKind::Equals, Position(1, 7)))
+        );
+        parser.next_token();
 
-//         parser
-//             .expect_peek_token_fn(|token| token == &Token::Integer(5))
-//             .unwrap();
-//         assert_eq!(parser.peek_token, Some(Token::Integer(5)));
-//         if let Ok(()) = parser.expect_peek_token(Token::If) {
-//             panic!("expect_next_token should fail at this point");
-//         }
-//     }
+        parser
+            .expect_peek_token_fn(|token| matches!(token.kind, TokenKind::Integer(_)))
+            .unwrap();
+        assert_eq!(
+            parser.peek_token,
+            Some(Token::new(TokenKind::Integer(5), Position(1, 9)))
+        );
+        if let Ok(()) = parser.expect_peek_token_kind(TokenKind::If) {
+            panic!("expect_next_token should fail at this point");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_function_call_expression() {
-//         let lexer = Lexer::new("(1, 2)".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let call = parser
-//             .parse_function_call(Box::new(Identifier::new(Token::Identifier(
-//                 "foo".to_string(),
-//             ))))
-//             .unwrap();
+    #[test]
+    fn test_parse_function_call_expression() {
+        let lexer = Lexer::new("(1, 2)".to_string());
+        let mut parser = Parser::new(lexer);
+        let call = parser
+            .parse_function_call(Box::new(Identifier::new(Token::new(
+                TokenKind::Identifier("foo".to_string()),
+                Position(1, 1),
+            ))))
+            .unwrap();
 
-//         assert!(call.as_any().is::<FunctionCall>());
-//         assert_eq!(call.function.to_string(), "foo");
-//         assert_eq!(call.arguments.len(), 2);
-//         assert_eq!(call.arguments[0].to_string(), "1");
-//         assert_eq!(call.arguments[1].to_string(), "2");
-//     }
+        assert!(call.as_any().is::<FunctionCall>());
+        assert_eq!(call.function.to_string(), "foo");
+        assert_eq!(call.arguments.len(), 2);
+        assert_eq!(call.arguments[0].to_string(), "1");
+        assert_eq!(call.arguments[1].to_string(), "2");
+    }
 
-//     #[test]
-//     fn test_parse_function_expression() {
-//         let lexer = Lexer::new("fn (a) { return a }".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let func = parser.parse_function_expression().unwrap();
+    #[test]
+    fn test_parse_function_expression() {
+        let lexer = Lexer::new("fn (a) { return a }".to_string());
+        let mut parser = Parser::new(lexer);
+        let func = parser.parse_function_expression().unwrap();
 
-//         assert!(func.as_any().is::<FunctionExpression>());
-//         assert_eq!(func.token, Token::Function);
-//         assert_eq!(func.parameters.len(), 1);
-//         assert_eq!(func.parameters[0].to_string(), "a");
-//         assert_eq!(func.body.statements.len(), 1);
-//         assert_eq!(func.body.to_string(), "{\n  return a\n}")
-//     }
+        assert!(func.as_any().is::<FunctionExpression>());
+        assert_eq!(func.token, Token::new(TokenKind::Function, Position(1, 1)));
+        assert_eq!(func.parameters.len(), 1);
+        assert_eq!(func.parameters[0].to_string(), "a");
+        assert_eq!(func.body.statements.len(), 1);
+        assert_eq!(func.body.to_string(), "{\n  return a\n}")
+    }
 
-//     #[test]
-//     fn test_parse_function_declaration_statement() {
-//         let lexer = Lexer::new("fn foo(x, y) { return x + y; }".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let func = parser.parse_function_declaration_statement().unwrap();
+    #[test]
+    fn test_parse_function_declaration_statement() {
+        let lexer = Lexer::new("fn foo(x, y) { return x + y; }".to_string());
+        let mut parser = Parser::new(lexer);
+        let func = parser.parse_function_declaration_statement().unwrap();
 
-//         assert_eq!(func.token, Token::Function);
-//         assert_eq!(func.identifier.to_string(), "foo");
-//         assert_eq!(func.parameters.len(), 2);
-//         assert_eq!(func.parameters[0].to_string(), "x");
-//         assert_eq!(func.parameters[1].to_string(), "y");
-//         assert_eq!(func.body.statements.len(), 1);
-//         assert_eq!(func.body.to_string(), "{\n  return (x+y)\n}")
-//     }
+        assert_eq!(func.token, Token::new(TokenKind::Function, Position(1, 1)));
+        assert_eq!(func.identifier.to_string(), "foo");
+        assert_eq!(func.parameters.len(), 2);
+        assert_eq!(func.parameters[0].to_string(), "x");
+        assert_eq!(func.parameters[1].to_string(), "y");
+        assert_eq!(func.body.statements.len(), 1);
+        assert_eq!(func.body.to_string(), "{\n  return (x+y)\n}")
+    }
 
-//     #[test]
-//     fn test_parse_function_parameters() {
-//         let lexer = Lexer::new("(a, b)".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let params = parser.parse_function_parameters().unwrap();
+    #[test]
+    fn test_parse_function_parameters() {
+        let lexer = Lexer::new("(a, b)".to_string());
+        let mut parser = Parser::new(lexer);
+        let params = parser.parse_function_parameters().unwrap();
 
-//         assert_eq!(params.len(), 2);
-//         assert_eq!(params[0].to_string(), "a");
-//         assert_eq!(params[1].to_string(), "b");
-//     }
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "a");
+        assert_eq!(params[1].to_string(), "b");
+    }
 
-//     #[test]
-//     fn test_parse_block_statement() {
-//         let lexer = Lexer::new("{ 5; ident; }".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let block = parser.parse_block_statement().unwrap();
+    #[test]
+    fn test_parse_block_statement() {
+        let lexer = Lexer::new("{ 5; ident; }".to_string());
+        let mut parser = Parser::new(lexer);
+        let block = parser.parse_block_statement().unwrap();
 
-//         assert_eq!(block.statements.len(), 2);
+        assert_eq!(block.statements.len(), 2);
 
-//         let int_expr = block.statements[0]
-//             .as_any()
-//             .downcast_ref::<ExpressionStatement>()
-//             .unwrap()
-//             .expression
-//             .as_any()
-//             .downcast_ref::<Integer>()
-//             .unwrap();
-//         assert_eq!(int_expr.to_string(), "5");
+        let int_expr = block.statements[0]
+            .as_any()
+            .downcast_ref::<ExpressionStatement>()
+            .unwrap()
+            .expression
+            .as_any()
+            .downcast_ref::<Integer>()
+            .unwrap();
+        assert_eq!(int_expr.to_string(), "5");
 
-//         let ident_expr = block.statements[1]
-//             .as_any()
-//             .downcast_ref::<ExpressionStatement>()
-//             .unwrap()
-//             .expression
-//             .as_any()
-//             .downcast_ref::<Identifier>()
-//             .unwrap();
-//         assert_eq!(ident_expr.to_string(), "ident");
-//     }
+        let ident_expr = block.statements[1]
+            .as_any()
+            .downcast_ref::<ExpressionStatement>()
+            .unwrap()
+            .expression
+            .as_any()
+            .downcast_ref::<Identifier>()
+            .unwrap();
+        assert_eq!(ident_expr.to_string(), "ident");
+    }
 
-//     #[test]
-//     fn test_parse_grouped() {
-//         let lexer = Lexer::new("let x = (2 + 2) * 2;".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let program = parser.parse().unwrap();
-//         assert_eq!(program.to_string(), "let x = ((2+2)*2)");
-//     }
+    #[test]
+    fn test_parse_grouped() {
+        let lexer = Lexer::new("let x = (2 + 2) * 2;".to_string());
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse().unwrap();
+        assert_eq!(program.to_string(), "let x = ((2+2)*2)");
+    }
 
-//     #[test]
-//     fn test_parse_infixed() {
-//         let lexer = Lexer::new("6 + 2".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parse_infixed() {
+        let lexer = Lexer::new("6 + 2".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             if let Some(infix_expr) = expr_stmt.expression.as_any().downcast_ref::<Infixed>() {
-//                 assert_eq!(infix_expr.left.token_literal(), "6");
-//                 assert_eq!(infix_expr.op, Token::Plus);
-//                 assert_eq!(infix_expr.right.token_literal(), "2");
-//             } else {
-//                 panic!("expected Infix node");
-//             }
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            if let Some(infix_expr) = expr_stmt.expression.as_any().downcast_ref::<Infixed>() {
+                assert_eq!(infix_expr.left.token_literal(), "6");
+                assert_eq!(infix_expr.op, Token::new(TokenKind::Plus, Position(1, 3)));
+                assert_eq!(infix_expr.right.token_literal(), "2");
+            } else {
+                panic!("expected Infix node");
+            }
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_prefixed() {
-//         let lexer = Lexer::new("-5 !true".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parse_prefixed() {
+        let lexer = Lexer::new("-5 !true".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
-//                 assert_eq!(prefix_expr.op, Token::Minus);
-//                 assert_eq!(prefix_expr.right.token_literal(), "5");
-//             } else {
-//                 panic!("expected Prefixed node");
-//             }
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
+                assert_eq!(prefix_expr.op, Token::new(TokenKind::Minus, Position(1, 1)));
+                assert_eq!(prefix_expr.right.token_literal(), "5");
+            } else {
+                panic!("expected Prefixed node");
+            }
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
-//                 assert_eq!(prefix_expr.op, Token::Bang);
-//                 assert_eq!(prefix_expr.right.token_literal(), "true");
-//             } else {
-//                 panic!("expected Prefixed node");
-//             }
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
+                assert_eq!(prefix_expr.op, Token::new(TokenKind::Bang, Position(1, 4)));
+                assert_eq!(prefix_expr.right.token_literal(), "true");
+            } else {
+                panic!("expected Prefixed node");
+            }
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_boolean() {
-//         let lexer = Lexer::new("true false".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parse_boolean() {
+        let lexer = Lexer::new("true false".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "true");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "true");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "false");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "false");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_float() {
-//         let lexer = Lexer::new("3.14 32.00878".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parse_float() {
+        let lexer = Lexer::new("3.14 32.00878".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "3.14");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "3.14");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "32.00878");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "32.00878");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_integer() {
-//         let lexer = Lexer::new("5 009".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parse_integer() {
+        let lexer = Lexer::new("5 009".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "5");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "5");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "9");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "9");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_identifier() {
-//         let lexer = Lexer::new("name variable".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parse_identifier() {
+        let lexer = Lexer::new("name variable".to_string());
+        let mut parser = Parser::new(lexer);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "name");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "name");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "variable");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        parser.next_token();
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
+            assert_eq!(expr_stmt.expression.token_literal(), "variable");
+        } else {
+            panic!("expected ExpressionStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_let_statement() {
-//         let lexer = Lexer::new("let x = 5; let y = 10;".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let stmt = parser.parse_statement().unwrap();
-//         assert_let_statement(stmt, "x", "5");
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         assert_let_statement(stmt, "y", "10");
-//     }
+    #[test]
+    fn test_parse_let_statement() {
+        let lexer = Lexer::new("let x = 5;".to_string());
+        let mut parser = Parser::new(lexer);
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(let_stmt) = stmt.as_any().downcast_ref::<LetStatement>() {
+            assert_eq!(let_stmt.token.kind, TokenKind::Let);
+            assert_eq!(let_stmt.value.to_string(), "5")
+        } else {
+            panic!("expected LetStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parse_return_statement() {
-//         let lexer = Lexer::new("return 5; return false;".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let stmt = parser.parse_statement().unwrap();
-//         assert_return_statement(stmt, "5");
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         assert_return_statement(stmt, "false");
-//     }
+    #[test]
+    fn test_parse_return_statement() {
+        let lexer = Lexer::new("return 5;".to_string());
+        let mut parser = Parser::new(lexer);
+        let stmt = parser.parse_statement().unwrap();
+        if let Some(return_stmt) = stmt.as_any().downcast_ref::<ReturnStatement>() {
+            assert_eq!(return_stmt.token.kind, TokenKind::Return);
+            assert_eq!(return_stmt.value.to_string(), "5")
+        } else {
+            panic!("expected ReturnStatement node");
+        }
+    }
 
-//     #[test]
-//     fn test_parser_errors() {
-//         let lexer = Lexer::new("№".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(errors[0], ParserError::IDontWantThis(Token::ILLEGAL('№')))
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-//         let lexer = Lexer::new("let".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(errors[0], ParserError::WhereIsEverybody)
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-//         let lexer = Lexer::new("let 13".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(errors[0], ParserError::IDontWantThis(Token::Integer(13)))
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-//         let lexer = Lexer::new("let what".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(errors[0], ParserError::WhyNothingIfIWantThis(Token::Equals))
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-//     }
+    #[test]
+    fn test_parser_errors() {
+        let lexer = Lexer::new("№".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(
+                    errors[0],
+                    ParserError::IDontWantThis(Token::new(TokenKind::ILLEGAL('№'), Position(1, 1)))
+                )
+            }
+            _ => panic!("expected to fail"),
+        };
 
-//     fn assert_identifier(node: Box<dyn Expression>, expected: &str) {
-//         if let Some(ident) = node.as_any().downcast_ref::<Identifier>() {
-//             assert_eq!(ident.token, Token::Identifier(expected.to_string()));
-//         } else {
-//             panic!("expected Identifier node");
-//         }
-//     }
+        let lexer = Lexer::new("let".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(errors[0], ParserError::WhereIsEverybody)
+            }
+            _ => panic!("expected to fail"),
+        };
 
-//     fn assert_return_statement(stmt: Box<dyn Statement>, expected_value: &str) {
-//         if let Some(return_stmt) = stmt.as_any().downcast_ref::<ReturnStatement>() {
-//             assert_eq!(return_stmt.token, Token::Return);
-//             assert_eq!(return_stmt.value.to_string(), expected_value.to_string());
-//         } else {
-//             panic!("expected ReturnStatement node");
-//         }
-//     }
+        let lexer = Lexer::new("let 13".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(
+                    errors[0],
+                    ParserError::IDontWantThis(Token::new(TokenKind::Integer(13), Position(1, 5)))
+                )
+            }
+            _ => panic!("expected to fail"),
+        };
 
-//     fn assert_let_statement(
-//         stmt: Box<dyn Statement>,
-//         expected_identifier: &str,
-//         expected_value: &str,
-//     ) {
-//         if let Some(let_stmt) = stmt.as_any().downcast_ref::<LetStatement>() {
-//             assert_eq!(let_stmt.token, Token::Let);
-//             assert_identifier(
-//                 Box::new(Identifier::new(Token::Identifier(
-//                     let_stmt.identifier.token_literal().to_string(),
-//                 ))),
-//                 expected_identifier,
-//             );
-//             assert_eq!(let_stmt.value.to_string(), expected_value.to_string())
-//         } else {
-//             panic!("expected LetStatement node");
-//         }
-//     }
-// }
+        let lexer = Lexer::new("let what".to_string());
+        let mut parser = Parser::new(lexer);
+        match parser.parse() {
+            Err(errors) => {
+                assert_eq!(errors.len(), 1);
+                assert_eq!(
+                    errors[0],
+                    ParserError::WhyNothingIfIWantThis(TokenKind::Equals)
+                )
+            }
+            _ => panic!("expected to fail"),
+        };
+    }
+}

@@ -147,6 +147,12 @@ impl Token {
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.literal())
+        write!(
+            f,
+            "{:?} [{}:{}]",
+            self.literal(),
+            self.position.0,
+            self.position.1
+        )
     }
 }
