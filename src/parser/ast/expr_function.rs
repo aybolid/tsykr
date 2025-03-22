@@ -1,37 +1,29 @@
-use super::{Block, Identifier, Node, Statement};
+use super::{Block, Expression, Identifier, Node};
 use crate::lexer::Token;
 
 #[derive(Debug)]
-pub struct FunctionDeclaration {
+pub struct FunctionExpression {
     pub token: Token,
-    pub identifier: Identifier,
     pub parameters: Vec<Identifier>,
     pub body: Block,
 }
 
-impl FunctionDeclaration {
-    pub fn new(
-        token: Token,
-        identifier: Identifier,
-        parameters: Vec<Identifier>,
-        body: Block,
-    ) -> Self {
+impl FunctionExpression {
+    pub fn new(token: Token, parameters: Vec<Identifier>, body: Block) -> Self {
         assert_eq!(token, Token::Function);
-        FunctionDeclaration {
+        FunctionExpression {
             token,
-            identifier,
             parameters,
             body,
         }
     }
 }
 
-impl ToString for FunctionDeclaration {
+impl ToString for FunctionExpression {
     fn to_string(&self) -> String {
         let mut out = String::from(self.token_literal());
         out.push(' ');
 
-        out.push_str(&self.identifier.to_string());
         out.push('(');
         out.push_str(
             &self
@@ -48,7 +40,7 @@ impl ToString for FunctionDeclaration {
     }
 }
 
-impl Node for FunctionDeclaration {
+impl Node for FunctionExpression {
     fn token_literal(&self) -> String {
         self.token.literal()
     }
@@ -58,7 +50,7 @@ impl Node for FunctionDeclaration {
     }
 }
 
-impl Statement for FunctionDeclaration {}
+impl Expression for FunctionExpression {}
 
 #[cfg(test)]
 mod tests {
@@ -67,7 +59,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_function_declaration_statement() {
+    fn test_function_expression() {
         let block = Block::new(
             Token::LeftCurly,
             vec![
@@ -86,19 +78,14 @@ mod tests {
             Identifier::new(Token::Identifier("_a".to_string())),
             Identifier::new(Token::Identifier("_b".to_string())),
         ];
-        let function = FunctionDeclaration::new(
-            Token::Function,
-            Identifier::new(Token::Identifier("add".to_string())),
-            params,
-            block,
-        );
+        let function = FunctionExpression::new(Token::Function, params, block);
 
-        assert!(function.as_any().is::<FunctionDeclaration>());
+        assert!(function.as_any().is::<FunctionExpression>());
         assert_eq!(function.token, Token::Function);
         assert_eq!(function.token_literal(), function.token.literal());
         assert_eq!(
             function.to_string(),
-            "fn add(_a, _b) {\n  let x = 5\n  return x\n}"
+            "fn (_a, _b) {\n  let x = 5\n  return x\n}"
         )
     }
 }

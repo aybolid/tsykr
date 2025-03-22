@@ -4,8 +4,8 @@ use crate::lexer::{Lexer, Token};
 
 use super::{
     precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float,
-    FunctionDeclaration, Identifier, Infixed, Integer, LetStatement, Prefixed, Program,
-    ReturnStatement, Statement,
+    FunctionDeclaration, FunctionExpression, Identifier, Infixed, Integer, LetStatement, Prefixed,
+    Program, ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -74,7 +74,9 @@ impl Parser {
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement()?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement()?)),
-                Token::Function => Ok(Box::new(self.parse_function_declaration_statement()?)),
+                Token::Function if matches!(self.peek_token, Some(Token::Identifier(_))) => {
+                    Ok(Box::new(self.parse_function_declaration_statement()?))
+                }
                 Token::LeftCurly => Ok(Box::new(self.parse_block_statement()?)),
                 Token::ILLEGAL(_) => Err(ParserError::IDontWantThis(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
@@ -182,6 +184,7 @@ impl Parser {
                 Token::Float(_) => Box::new(self.parse_float()?),
                 Token::True | Token::False => Box::new(self.parse_boolean()?),
                 Token::Bang | Token::Minus => Box::new(self.parse_prefixed_expression()?),
+                Token::Function => Box::new(self.parse_function_expression()?),
 
                 Token::LeftParen => self.parse_grouped_expression()?,
 
@@ -211,6 +214,20 @@ impl Parser {
         }
 
         Ok(expr)
+    }
+
+    fn parse_function_expression(&mut self) -> Result<FunctionExpression, ParserError> {
+        self.expect_current_token(Token::Function)?;
+        let fn_token = self.current_token.take().expect("checked before");
+        self.next_token();
+
+        self.expect_current_token(Token::LeftParen)?;
+        let params = self.parse_function_parameters()?;
+        self.next_token();
+
+        let body = self.parse_block_statement()?;
+
+        Ok(FunctionExpression::new(fn_token, params, body))
     }
 
     /// Parses a grouped expression (wrapped in parentheses).
@@ -440,6 +457,20 @@ mod tests {
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
         }
+    }
+
+    #[test]
+    fn test_parse_function_expression() {
+        let lexer = Lexer::new("fn (a) { return a }".to_string());
+        let mut parser = Parser::new(lexer);
+        let func = parser.parse_function_expression().unwrap();
+
+        assert!(func.as_any().is::<FunctionExpression>());
+        assert_eq!(func.token, Token::Function);
+        assert_eq!(func.parameters.len(), 1);
+        assert_eq!(func.parameters[0].to_string(), "a");
+        assert_eq!(func.body.statements.len(), 1);
+        assert_eq!(func.body.to_string(), "{\n  return a\n}")
     }
 
     #[test]
