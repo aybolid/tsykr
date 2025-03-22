@@ -1,4 +1,7 @@
-use crate::lexer::Token;
+use crate::{
+    eval::{Eval, EvalError, Object},
+    lexer::Token,
+};
 
 use super::{Expression, Node, Statement};
 
@@ -29,6 +32,12 @@ impl Node for ExpressionStatement {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for ExpressionStatement {
+    fn eval(&self) -> Result<Box<dyn Object>, EvalError> {
+        self.expression.eval()
     }
 }
 

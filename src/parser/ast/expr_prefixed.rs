@@ -1,4 +1,7 @@
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 use super::{Expression, Node};
 
@@ -37,6 +40,12 @@ impl Node for Prefixed {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for Prefixed {
+    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+        todo!()
     }
 }
 

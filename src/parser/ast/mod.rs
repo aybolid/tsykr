@@ -30,6 +30,8 @@ pub use stmt_function::*;
 pub use stmt_let::*;
 pub use stmt_return::*;
 
+use crate::eval::Eval;
+
 pub trait Node
 where
     Self: ToString,
@@ -45,11 +47,13 @@ where
 pub trait Statement
 where
     Self: Node,
+    Self: Eval,
 {
 }
 
 pub trait Expression
 where
     Self: Node,
+    Self: Eval,
 {
 }

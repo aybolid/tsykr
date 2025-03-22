@@ -1,4 +1,7 @@
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 use super::{Expression, Identifier, Node, Statement};
 
@@ -43,6 +46,12 @@ impl Node for LetStatement {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for LetStatement {
+    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+        todo!()
     }
 }
 

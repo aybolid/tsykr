@@ -13,6 +13,13 @@ impl Program {
     pub fn push_statement(&mut self, statement: Box<dyn Statement>) {
         self.statements.push(statement);
     }
+
+    pub fn eval_program(&self) {
+        for statement in &self.statements {
+            let result = statement.eval().unwrap();
+            println!("{}", result.inspect())
+        }
+    }
 }
 
 impl ToString for Program {

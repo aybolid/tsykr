@@ -1,5 +1,8 @@
 use super::{Block, Expression, Identifier, Node};
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 #[derive(Debug)]
 pub struct FunctionExpression {
@@ -47,6 +50,12 @@ impl Node for FunctionExpression {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for FunctionExpression {
+    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+        todo!()
     }
 }
 

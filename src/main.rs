@@ -2,6 +2,7 @@ use anyhow::Result;
 use clap::Parser;
 use lexer::Lexer;
 
+mod eval;
 mod lexer;
 mod parser;
 mod repl;

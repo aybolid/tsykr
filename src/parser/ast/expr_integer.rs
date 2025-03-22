@@ -1,4 +1,7 @@
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::{self, Eval, EvalError, Object},
+    lexer::{Token, TokenKind},
+};
 
 use super::{Expression, Node};
 
@@ -37,11 +40,20 @@ impl Node for Integer {
     }
 }
 
+impl Eval for Integer {
+    fn eval(&self) -> Result<Box<dyn Object>, EvalError> {
+        match self.token.kind {
+            TokenKind::Integer(value) => Ok(Box::new(eval::Integer::new(value))),
+            _ => unreachable!(),
+        }
+    }
+}
+
 impl Expression for Integer {}
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::Position;
+    use crate::{eval::ObjectKind, lexer::Position};
 
     use super::*;
 
@@ -54,5 +66,16 @@ mod tests {
         assert_eq!(integer.token, token);
         assert_eq!(integer.to_string(), token.literal());
         assert_eq!(integer.token_literal(), token.literal());
+    }
+
+    #[test]
+    fn test_integer_evaluate() {
+        let token = Token::new(TokenKind::Integer(42), Position(0, 0));
+        let integer = Integer::new(token.clone());
+
+        let result = integer.eval();
+        let obj = result.unwrap();
+        assert_eq!(obj.kind(), ObjectKind::INTEGER);
+        assert_eq!(obj.inspect(), "42");
     }
 }

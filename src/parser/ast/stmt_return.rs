@@ -1,4 +1,7 @@
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 use super::{Expression, Node, Statement};
 
@@ -34,6 +37,12 @@ impl Node for ReturnStatement {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for ReturnStatement {
+    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+        todo!()
     }
 }
 

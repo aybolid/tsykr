@@ -67,13 +67,6 @@ impl Parser {
             return Err(errors);
         }
 
-        #[cfg(debug_assertions)]
-        {
-            println!("{program:#?}");
-            println!("Reconstructed AST:");
-            println!("{}", program.to_string());
-            println!();
-        }
         println!("Parsing took: {:.2?}", start_time.elapsed());
 
         Ok(program)

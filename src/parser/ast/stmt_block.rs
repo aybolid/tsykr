@@ -1,5 +1,8 @@
 use super::{Node, Statement};
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 /// Block statement node.
 #[derive(Debug)]
@@ -38,6 +41,12 @@ impl Node for Block {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for Block {
+    fn eval(&self) -> Result<Box<dyn crate::eval::Object>, crate::eval::EvalError> {
+        todo!()
     }
 }
 
