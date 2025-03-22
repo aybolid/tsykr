@@ -7,7 +7,7 @@ mod expr_prefixed;
 mod program;
 mod stmt_block;
 mod stmt_expr;
-mod stmt_function;
+mod stmt_function_declaration;
 mod stmt_let;
 mod stmt_return;
 
@@ -22,7 +22,7 @@ pub use expr_prefixed::*;
 pub use program::*;
 pub use stmt_block::*;
 pub use stmt_expr::*;
-pub use stmt_function::*;
+pub use stmt_function_declaration::*;
 pub use stmt_let::*;
 pub use stmt_return::*;
 

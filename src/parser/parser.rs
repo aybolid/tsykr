@@ -3,8 +3,9 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float, Function,
-    Identifier, Infixed, Integer, LetStatement, Prefixed, Program, ReturnStatement, Statement,
+    precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float,
+    FunctionDeclaration, Identifier, Infixed, Integer, LetStatement, Prefixed, Program,
+    ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -73,7 +74,7 @@ impl Parser {
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement()?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement()?)),
-                Token::Function => Ok(Box::new(self.parse_function_statement()?)),
+                Token::Function => Ok(Box::new(self.parse_function_declaration_statement()?)),
                 Token::LeftCurly => Ok(Box::new(self.parse_block_statement()?)),
                 Token::ILLEGAL(_) => Err(ParserError::IDontWantThis(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
@@ -83,8 +84,8 @@ impl Parser {
         }
     }
 
-    /// Parses a function statement.
-    fn parse_function_statement(&mut self) -> Result<Function, ParserError> {
+    /// Parses a function declaration statement.
+    fn parse_function_declaration_statement(&mut self) -> Result<FunctionDeclaration, ParserError> {
         self.expect_current_token(Token::Function)?;
         let fn_token = self.current_token.take().expect("checked before");
         self.next_token();
@@ -98,7 +99,7 @@ impl Parser {
 
         let body = self.parse_block_statement()?;
 
-        Ok(Function::new(fn_token, identifier, params, body))
+        Ok(FunctionDeclaration::new(fn_token, identifier, params, body))
     }
 
     /// Parses a block statement.
@@ -114,6 +115,8 @@ impl Parser {
             statements.push(stmt);
             self.next_token();
         }
+
+        self.expect_current_token(Token::RightCurly)?;
 
         Ok(Block::new(block_start_token, statements))
     }
@@ -440,10 +443,10 @@ mod tests {
     }
 
     #[test]
-    fn test_parse_function_statement() {
+    fn test_parse_function_declaration_statement() {
         let lexer = Lexer::new("fn foo(x, y) { return x + y; }".to_string());
         let mut parser = Parser::new(lexer);
-        let func = parser.parse_function_statement().unwrap();
+        let func = parser.parse_function_declaration_statement().unwrap();
 
         assert_eq!(func.token, Token::Function);
         assert_eq!(func.identifier.to_string(), "foo");

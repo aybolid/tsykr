@@ -2,14 +2,14 @@ use super::{Block, Identifier, Node, Statement};
 use crate::lexer::Token;
 
 #[derive(Debug)]
-pub struct Function {
+pub struct FunctionDeclaration {
     pub token: Token,
     pub identifier: Identifier,
     pub parameters: Vec<Identifier>,
     pub body: Block,
 }
 
-impl Function {
+impl FunctionDeclaration {
     pub fn new(
         token: Token,
         identifier: Identifier,
@@ -17,7 +17,7 @@ impl Function {
         body: Block,
     ) -> Self {
         assert_eq!(token, Token::Function);
-        Function {
+        FunctionDeclaration {
             token,
             identifier,
             parameters,
@@ -26,7 +26,7 @@ impl Function {
     }
 }
 
-impl ToString for Function {
+impl ToString for FunctionDeclaration {
     fn to_string(&self) -> String {
         let mut out = String::from(self.token_literal());
         out.push(' ');
@@ -48,7 +48,7 @@ impl ToString for Function {
     }
 }
 
-impl Node for Function {
+impl Node for FunctionDeclaration {
     fn token_literal(&self) -> String {
         self.token.literal()
     }
@@ -58,7 +58,7 @@ impl Node for Function {
     }
 }
 
-impl Statement for Function {}
+impl Statement for FunctionDeclaration {}
 
 #[cfg(test)]
 mod tests {
@@ -86,14 +86,14 @@ mod tests {
             Identifier::new(Token::Identifier("_a".to_string())),
             Identifier::new(Token::Identifier("_b".to_string())),
         ];
-        let function = Function::new(
+        let function = FunctionDeclaration::new(
             Token::Function,
             Identifier::new(Token::Identifier("add".to_string())),
             params,
             block,
         );
 
-        assert!(function.as_any().is::<Function>());
+        assert!(function.as_any().is::<FunctionDeclaration>());
         assert_eq!(function.token, Token::Function);
         assert_eq!(function.token_literal(), function.token.literal());
         assert_eq!(
