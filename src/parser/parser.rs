@@ -73,8 +73,8 @@ impl Parser {
             println!("Reconstructed AST:");
             println!("{}", program.to_string());
             println!();
-            println!("Parsing took: {:.2?}", start_time.elapsed());
         }
+        println!("Parsing took: {:.2?}", start_time.elapsed());
 
         Ok(program)
     }
