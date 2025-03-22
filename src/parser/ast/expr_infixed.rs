@@ -5,8 +5,8 @@ use super::{Expression, Node};
 /// Infixed ast node.
 #[derive(Debug)]
 pub struct Infixed {
-    // Operator token
     pub left: Box<dyn Expression>,
+    /// Operator token
     pub op: Token,
     pub right: Box<dyn Expression>,
 }
