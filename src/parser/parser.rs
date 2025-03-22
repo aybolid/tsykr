@@ -3,8 +3,8 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Boolean, Expression, ExpressionStatement, Float, Identifier, Infixed,
-    Integer, LetStatement, Prefixed, Program, ReturnStatement, Statement,
+    precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float, Function,
+    Identifier, Infixed, Integer, LetStatement, Prefixed, Program, ReturnStatement, Statement,
 };
 
 #[derive(Debug, PartialEq, Error)]
@@ -73,6 +73,8 @@ impl Parser {
             match token {
                 Token::Let => Ok(Box::new(self.parse_let_statement()?)),
                 Token::Return => Ok(Box::new(self.parse_return_statement()?)),
+                Token::Function => Ok(Box::new(self.parse_function_statement()?)),
+                Token::LeftCurly => Ok(Box::new(self.parse_block_statement()?)),
                 Token::ILLEGAL(_) => Err(ParserError::IDontWantThis(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
             }
@@ -81,17 +83,84 @@ impl Parser {
         }
     }
 
+    /// Parses a function statement.
+    fn parse_function_statement(&mut self) -> Result<Function, ParserError> {
+        self.expect_current_token(Token::Function)?;
+        let fn_token = self.current_token.take().expect("checked before");
+        self.next_token();
+
+        let identifier = self.parse_identifier()?;
+        self.expect_peek_token(Token::LeftParen)?;
+        self.next_token();
+
+        let params = self.parse_function_parameters()?;
+        self.next_token();
+
+        let body = self.parse_block_statement()?;
+
+        Ok(Function::new(fn_token, identifier, params, body))
+    }
+
+    /// Parses a block statement.
+    fn parse_block_statement(&mut self) -> Result<Block, ParserError> {
+        self.expect_current_token(Token::LeftCurly)?;
+        let block_start_token = self.current_token.take().expect("checked before");
+        self.next_token();
+
+        let mut statements = vec![];
+
+        while self.current_token != Some(Token::RightCurly) && self.current_token != None {
+            let stmt = self.parse_statement()?;
+            statements.push(stmt);
+            self.next_token();
+        }
+
+        Ok(Block::new(block_start_token, statements))
+    }
+
+    /// Parses a function parameters.
+    fn parse_function_parameters(&mut self) -> Result<Vec<Identifier>, ParserError> {
+        self.expect_current_token(Token::LeftParen)?;
+        let mut params = vec![];
+
+        if self.peek_token == Some(Token::RightParen) {
+            self.next_token();
+            return Ok(params);
+        }
+
+        self.next_token();
+
+        let ident = self.parse_identifier()?;
+        params.push(ident);
+
+        while self.peek_token == Some(Token::Comma) {
+            self.next_token();
+            self.next_token();
+            let ident = self.parse_identifier()?;
+            params.push(ident);
+        }
+
+        self.expect_peek_token(Token::RightParen)?;
+        self.next_token();
+
+        Ok(params)
+    }
+
     /// Parses an expression statement
     fn parse_expression_statement(&mut self) -> Result<ExpressionStatement, ParserError> {
         if self.current_token.is_none() {
             return Err(ParserError::WhereIsEverybody);
         }
 
-        Ok(ExpressionStatement::new(
-            // clone token as it will be consumed by the expression parser
-            self.current_token.clone().expect("checked before"),
-            self.parse_expression(Precedence::Lowest)?,
-        ))
+        // clone token as it will be consumed by the expression parser
+        let expr_token = self.current_token.clone().expect("checked before");
+        let expr = self.parse_expression(Precedence::Lowest)?;
+
+        if self.peek_token == Some(Token::SemiColon) {
+            self.next_token();
+        }
+
+        Ok(ExpressionStatement::new(expr_token, expr))
     }
 
     /// Parses an expression.
@@ -368,6 +437,61 @@ mod tests {
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
         }
+    }
+
+    #[test]
+    fn test_parse_function_statement() {
+        let lexer = Lexer::new("fn foo(x, y) { return x + y; }".to_string());
+        let mut parser = Parser::new(lexer);
+        let func = parser.parse_function_statement().unwrap();
+
+        assert_eq!(func.token, Token::Function);
+        assert_eq!(func.identifier.to_string(), "foo");
+        assert_eq!(func.parameters.len(), 2);
+        assert_eq!(func.parameters[0].to_string(), "x");
+        assert_eq!(func.parameters[1].to_string(), "y");
+        assert_eq!(func.body.statements.len(), 1);
+        assert_eq!(func.body.to_string(), "{\n  return (x+y)\n}")
+    }
+
+    #[test]
+    fn test_parse_function_parameters() {
+        let lexer = Lexer::new("(a, b)".to_string());
+        let mut parser = Parser::new(lexer);
+        let params = parser.parse_function_parameters().unwrap();
+
+        assert_eq!(params.len(), 2);
+        assert_eq!(params[0].to_string(), "a");
+        assert_eq!(params[1].to_string(), "b");
+    }
+
+    #[test]
+    fn test_parse_block_statement() {
+        let lexer = Lexer::new("{ 5; ident; }".to_string());
+        let mut parser = Parser::new(lexer);
+        let block = parser.parse_block_statement().unwrap();
+
+        assert_eq!(block.statements.len(), 2);
+
+        let int_expr = block.statements[0]
+            .as_any()
+            .downcast_ref::<ExpressionStatement>()
+            .unwrap()
+            .expression
+            .as_any()
+            .downcast_ref::<Integer>()
+            .unwrap();
+        assert_eq!(int_expr.to_string(), "5");
+
+        let ident_expr = block.statements[1]
+            .as_any()
+            .downcast_ref::<ExpressionStatement>()
+            .unwrap()
+            .expression
+            .as_any()
+            .downcast_ref::<Identifier>()
+            .unwrap();
+        assert_eq!(ident_expr.to_string(), "ident");
     }
 
     #[test]
