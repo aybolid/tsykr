@@ -259,7 +259,6 @@ impl Parser {
     /// Checks if the peek token matches the expected token.
     ///
     /// Generally, it's better to use this method instead of `expect_next_token_fn` as it produces a more descriptive error message.
-    #[allow(unused)]
     fn expect_peek_token(&mut self, expected_token: Token) -> Result<(), ParserError> {
         match &self.peek_token {
             Some(token) if token == &expected_token => Ok(()),

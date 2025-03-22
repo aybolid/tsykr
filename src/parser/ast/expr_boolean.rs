@@ -45,6 +45,7 @@ mod tests {
         let token = Token::True;
         let boolean = Boolean::new(token.clone());
 
+        assert!(boolean.as_any().is::<Boolean>());
         assert_eq!(boolean.token, token);
         assert_eq!(boolean.to_string(), token.literal());
         assert_eq!(boolean.token_literal(), token.literal());

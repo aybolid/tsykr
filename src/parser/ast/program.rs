@@ -53,6 +53,7 @@ mod tests {
             Box::new(Boolean::new(Token::True)),
         )));
 
+        assert!(program.as_any().is::<Program>());
         assert_eq!(program.statements.len(), 2);
         assert_eq!(program.token_literal(), "");
         assert_eq!(program.to_string(), "5\nreturn true")

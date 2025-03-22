@@ -45,6 +45,7 @@ mod tests {
         let token = Token::Integer(42);
         let integer = Integer::new(token.clone());
 
+        assert!(integer.as_any().is::<Integer>());
         assert_eq!(integer.token, token);
         assert_eq!(integer.to_string(), token.literal());
         assert_eq!(integer.token_literal(), token.literal());

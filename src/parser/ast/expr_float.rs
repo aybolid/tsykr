@@ -45,6 +45,7 @@ mod tests {
         let token = Token::Float(2.23);
         let float = Float::new(token.clone());
 
+        assert!(float.as_any().is::<Float>());
         assert_eq!(float.token, token);
         assert_eq!(float.to_string(), token.literal());
         assert_eq!(float.token_literal(), token.literal());
