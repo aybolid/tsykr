@@ -117,8 +117,16 @@ impl Display for TokenKind {
     }
 }
 
+/// Represents the position of a token in the source code.
+/// 0 - line; 1 - column
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct Position(pub usize, pub usize);
+
+impl Display for Position {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "line:{}, col:{}", self.0, self.1)
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Token {
@@ -147,12 +155,6 @@ impl Token {
 
 impl Display for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{:?} [{}:{}]",
-            self.literal(),
-            self.position.0,
-            self.position.1
-        )
+        write!(f, "{} - {}", self.literal(), self.position)
     }
 }
