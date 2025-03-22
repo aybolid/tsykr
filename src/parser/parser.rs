@@ -111,6 +111,8 @@ impl Parser {
                 Token::True | Token::False => Box::new(self.parse_boolean()?),
                 Token::Bang | Token::Minus => Box::new(self.parse_prefixed_expression()?),
 
+                Token::LeftParen => self.parse_grouped_expression()?,
+
                 other_token => return Err(ParserError::IDontWantThis(other_token.clone())),
             };
 
@@ -136,6 +138,16 @@ impl Parser {
             };
         }
 
+        Ok(expr)
+    }
+
+    /// Parses a grouped expression (wrapped in parentheses).
+    fn parse_grouped_expression(&mut self) -> Result<Box<dyn Expression>, ParserError> {
+        self.expect_current_token(Token::LeftParen)?;
+        self.next_token();
+        let expr = self.parse_expression(Precedence::Lowest)?;
+        self.expect_peek_token(Token::RightParen)?;
+        self.next_token();
         Ok(expr)
     }
 
@@ -357,6 +369,14 @@ mod tests {
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
         }
+    }
+
+    #[test]
+    fn test_parse_grouped() {
+        let lexer = Lexer::new("let x = (2 + 2) * 2;".to_string());
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse().unwrap();
+        assert_eq!(program.to_string(), "let x = ((2+2)*2)");
     }
 
     #[test]
