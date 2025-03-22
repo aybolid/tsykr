@@ -38,19 +38,22 @@ impl Node for Program {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::Token;
+    use crate::lexer::{Position, Token, TokenKind};
     use crate::parser::{Boolean, ExpressionStatement, Integer, ReturnStatement};
 
     #[test]
     fn test_program() {
         let mut program = Program::new();
         program.push_statement(Box::new(ExpressionStatement::new(
-            Token::Integer(5),
-            Box::new(Integer::new(Token::Integer(5))),
+            Token::new(TokenKind::Integer(5), Position(0, 0)),
+            Box::new(Integer::new(Token::new(
+                TokenKind::Integer(5),
+                Position(0, 0),
+            ))),
         )));
         program.push_statement(Box::new(ReturnStatement::new(
-            Token::Return,
-            Box::new(Boolean::new(Token::True)),
+            Token::new(TokenKind::Return, Position(0, 0)),
+            Box::new(Boolean::new(Token::new(TokenKind::True, Position(0, 0)))),
         )));
 
         assert!(program.as_any().is::<Program>());

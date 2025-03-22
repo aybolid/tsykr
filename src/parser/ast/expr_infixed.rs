@@ -43,15 +43,24 @@ impl Expression for Infixed {}
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::Integer;
+    use crate::{
+        lexer::{Position, TokenKind},
+        parser::Integer,
+    };
 
     use super::*;
 
     #[test]
     fn test_infixed_node() {
-        let token = Token::Minus;
-        let left = Box::new(Integer::new(Token::Integer(42)));
-        let right = Box::new(Integer::new(Token::Integer(42)));
+        let token = Token::new(TokenKind::Minus, Position(0, 0));
+        let left = Box::new(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
+        let right = Box::new(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
         let infixed = Infixed::new(token.clone(), left, right);
 
         assert_eq!(infixed.op, token);

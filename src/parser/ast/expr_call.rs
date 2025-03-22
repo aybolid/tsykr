@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
@@ -15,7 +15,7 @@ impl FunctionCall {
         function: Box<dyn Expression>,
         arguments: Vec<Box<dyn Expression>>,
     ) -> Self {
-        assert_eq!(token, Token::LeftParen);
+        assert_eq!(token.kind, TokenKind::LeftParen);
         Self {
             token,
             function,
@@ -55,16 +55,25 @@ impl Expression for FunctionCall {}
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{Identifier, Integer};
+    use crate::{
+        lexer::Position,
+        parser::{Identifier, Integer},
+    };
 
     use super::*;
 
     #[test]
     fn test_function_call() {
         let call = FunctionCall::new(
-            Token::LeftParen,
-            Box::new(Identifier::new(Token::Identifier("my_func".to_string()))),
-            vec![Box::new(Integer::new(Token::Integer(42)))],
+            Token::new(TokenKind::LeftParen, Position(0, 0)),
+            Box::new(Identifier::new(Token::new(
+                TokenKind::Identifier("my_func".to_string()),
+                Position(0, 0),
+            ))),
+            vec![Box::new(Integer::new(Token::new(
+                TokenKind::Integer(42),
+                Position(0, 0),
+            )))],
         );
 
         assert!(call.as_any().is::<FunctionCall>());

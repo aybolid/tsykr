@@ -1,4 +1,4 @@
-use super::Token;
+use super::{Position, Token, TokenKind};
 
 #[derive(Debug)]
 pub struct Lexer {
@@ -10,6 +10,9 @@ pub struct Lexer {
     current_ch: Option<char>,
     /// Next character being processed
     peek_ch: Option<char>,
+
+    /// Current position in the input string
+    position: Position,
 }
 
 impl Lexer {
@@ -19,6 +22,7 @@ impl Lexer {
             current_pos: 0,
             current_ch: None,
             peek_ch: None,
+            position: Position(1, 0),
         };
         lexer.read_char();
         lexer
@@ -37,6 +41,15 @@ impl Lexer {
             };
             self.peek_ch = self.input.chars().nth(self.current_pos + 1);
         }
+
+        if self.current_ch.is_some() {
+            self.position.1 += 1;
+            if self.current_ch.unwrap() == '\n' {
+                self.position.0 += 1;
+                self.position.1 = 0;
+            }
+        }
+
         self.current_pos += 1;
     }
 
@@ -56,6 +69,8 @@ impl Lexer {
     /// If keyword, returns the corresponding keyword token.
     /// Otherwise, returns an identifier token.
     fn read_alphabetic_token(&mut self) -> Token {
+        let token_position = self.position;
+
         let start_token = self.current_ch.unwrap();
         let mut buf = String::new();
         buf.push(start_token);
@@ -67,10 +82,12 @@ impl Lexer {
             self.read_char();
         }
 
-        Token::new_alphabetic(buf)
+        Token::new(TokenKind::new_alphabetic(buf), token_position)
     }
 
     fn read_numeric_token(&mut self) -> Token {
+        let token_position = self.position;
+
         let start_token = self.current_ch.unwrap();
         let mut buf = String::new();
         buf.push(start_token);
@@ -83,9 +100,9 @@ impl Lexer {
         }
 
         if buf.contains('.') {
-            Token::Float(buf.parse().unwrap())
+            Token::new(TokenKind::Float(buf.parse().unwrap()), token_position)
         } else {
-            Token::Integer(buf.parse().unwrap())
+            Token::new(TokenKind::Integer(buf.parse().unwrap()), token_position)
         }
     }
 
@@ -117,60 +134,62 @@ impl Iterator for Lexer {
             return None;
         }
 
-        let token = match ch.expect("cant be None") {
-            '+' => Token::Plus,
-            '-' => Token::Minus,
-            '*' => Token::Asterisk,
-            '/' => Token::Slash,
+        let token_position = self.position;
 
-            ';' => Token::SemiColon,
-            ':' => Token::Colon,
-            '(' => Token::LeftParen,
-            ')' => Token::RightParen,
-            '{' => Token::LeftCurly,
-            '}' => Token::RightCurly,
-            '[' => Token::LeftBracket,
-            ']' => Token::RightBracket,
-            ',' => Token::Comma,
-            '.' => Token::Dot,
+        let token = match ch.expect("cant be None") {
+            '+' => Token::new(TokenKind::Plus, token_position),
+            '-' => Token::new(TokenKind::Minus, token_position),
+            '*' => Token::new(TokenKind::Asterisk, token_position),
+            '/' => Token::new(TokenKind::Slash, token_position),
+
+            ';' => Token::new(TokenKind::SemiColon, token_position),
+            ':' => Token::new(TokenKind::Colon, token_position),
+            '(' => Token::new(TokenKind::LeftParen, token_position),
+            ')' => Token::new(TokenKind::RightParen, token_position),
+            '{' => Token::new(TokenKind::LeftCurly, token_position),
+            '}' => Token::new(TokenKind::RightCurly, token_position),
+            '[' => Token::new(TokenKind::LeftBracket, token_position),
+            ']' => Token::new(TokenKind::RightBracket, token_position),
+            ',' => Token::new(TokenKind::Comma, token_position),
+            '.' => Token::new(TokenKind::Dot, token_position),
 
             '=' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    Token::EqualsEquals
+                    Token::new(TokenKind::EqualsEquals, token_position)
                 } else {
-                    Token::Equals
+                    Token::new(TokenKind::Equals, token_position)
                 }
             }
             '!' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    Token::BangEquals
+                    Token::new(TokenKind::BangEquals, token_position)
                 } else {
-                    Token::Bang
+                    Token::new(TokenKind::Bang, token_position)
                 }
             }
             '>' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    Token::GreaterThanEquals
+                    Token::new(TokenKind::GreaterThanEquals, token_position)
                 } else {
-                    Token::GreaterThan
+                    Token::new(TokenKind::GreaterThan, token_position)
                 }
             }
             '<' => {
                 if self.peek_char_is('=') {
                     self.read_char();
-                    Token::LessThanEquals
+                    Token::new(TokenKind::LessThanEquals, token_position)
                 } else {
-                    Token::LessThan
+                    Token::new(TokenKind::LessThan, token_position)
                 }
             }
 
             _ if self.current_is_alphabetic() => return Some(self.read_alphabetic_token()),
             _ if self.current_is_numeric() => return Some(self.read_numeric_token()),
 
-            c => Token::ILLEGAL(c),
+            c => Token::new(TokenKind::ILLEGAL(c), token_position),
         };
 
         self.read_char();
@@ -186,33 +205,96 @@ mod tests {
     fn test_smth_that_makes_sense() {
         let input = String::from("if (true) { return 2 + 2; } else { return 3.25 - 0.25; }");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(Token::If));
-        assert_eq!(lexer.next(), Some(Token::LeftParen));
-        assert_eq!(lexer.next(), Some(Token::True));
-        assert_eq!(lexer.next(), Some(Token::RightParen));
-        assert_eq!(lexer.next(), Some(Token::LeftCurly));
-        assert_eq!(lexer.next(), Some(Token::Return));
-        assert_eq!(lexer.next(), Some(Token::Integer(2)));
-        assert_eq!(lexer.next(), Some(Token::Plus));
-        assert_eq!(lexer.next(), Some(Token::Integer(2)));
-        assert_eq!(lexer.next(), Some(Token::SemiColon));
-        assert_eq!(lexer.next(), Some(Token::RightCurly));
-        assert_eq!(lexer.next(), Some(Token::Else));
-        assert_eq!(lexer.next(), Some(Token::LeftCurly));
-        assert_eq!(lexer.next(), Some(Token::Return));
-        assert_eq!(lexer.next(), Some(Token::Float(3.25)));
-        assert_eq!(lexer.next(), Some(Token::Minus));
-        assert_eq!(lexer.next(), Some(Token::Float(0.25)));
-        assert_eq!(lexer.next(), Some(Token::SemiColon));
-        assert_eq!(lexer.next(), Some(Token::RightCurly));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::If, Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftParen, Position(1, 4)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::True, Position(1, 5)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightParen, Position(1, 9)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftCurly, Position(1, 11)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Return, Position(1, 13)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Integer(2), Position(1, 20)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Plus, Position(1, 22)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Integer(2), Position(1, 24)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::SemiColon, Position(1, 25)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightCurly, Position(1, 27)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Else, Position(1, 29)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftCurly, Position(1, 34)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Return, Position(1, 36)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Float(3.25), Position(1, 43)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Minus, Position(1, 48)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Float(0.25), Position(1, 50)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::SemiColon, Position(1, 54)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightCurly, Position(1, 56)))
+        );
     }
 
     #[test]
     fn test_boolean_tokens() {
         let input = String::from("true false");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(Token::True));
-        assert_eq!(lexer.next(), Some(Token::False));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::True, Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::False, Position(1, 6)))
+        );
         assert_eq!(lexer.next(), None);
     }
 
@@ -220,12 +302,30 @@ mod tests {
     fn test_numeric_tokens() {
         let input = String::from("123 456.789 -123 -23.23");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(Token::Integer(123)));
-        assert_eq!(lexer.next(), Some(Token::Float(456.789)));
-        assert_eq!(lexer.next(), Some(Token::Minus));
-        assert_eq!(lexer.next(), Some(Token::Integer(123)));
-        assert_eq!(lexer.next(), Some(Token::Minus));
-        assert_eq!(lexer.next(), Some(Token::Float(23.23)));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Integer(123), Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Float(456.789), Position(1, 5)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Minus, Position(1, 13)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Integer(123), Position(1, 14)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Minus, Position(1, 18)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Float(23.23), Position(1, 19)))
+        );
         assert_eq!(lexer.next(), None);
     }
 
@@ -233,16 +333,46 @@ mod tests {
     fn test_punctuation_tokens() {
         let input = String::from(";:[]{}(),.");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(Token::SemiColon));
-        assert_eq!(lexer.next(), Some(Token::Colon));
-        assert_eq!(lexer.next(), Some(Token::LeftBracket));
-        assert_eq!(lexer.next(), Some(Token::RightBracket));
-        assert_eq!(lexer.next(), Some(Token::LeftCurly));
-        assert_eq!(lexer.next(), Some(Token::RightCurly));
-        assert_eq!(lexer.next(), Some(Token::LeftParen));
-        assert_eq!(lexer.next(), Some(Token::RightParen));
-        assert_eq!(lexer.next(), Some(Token::Comma));
-        assert_eq!(lexer.next(), Some(Token::Dot));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::SemiColon, Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Colon, Position(1, 2)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftBracket, Position(1, 3)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightBracket, Position(1, 4)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftCurly, Position(1, 5)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightCurly, Position(1, 6)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftParen, Position(1, 7)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightParen, Position(1, 8)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Comma, Position(1, 9)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Dot, Position(1, 10)))
+        );
         assert_eq!(lexer.next(), None);
     }
 
@@ -250,11 +380,29 @@ mod tests {
     fn test_alphabetic_token() {
         let input = String::from("let what_x return if else");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(Token::Let));
-        assert_eq!(lexer.next(), Some(Token::Identifier("what_x".to_string())));
-        assert_eq!(lexer.next(), Some(Token::Return));
-        assert_eq!(lexer.next(), Some(Token::If));
-        assert_eq!(lexer.next(), Some(Token::Else));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Let, Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(
+                TokenKind::Identifier("what_x".to_string()),
+                Position(1, 5)
+            ))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Return, Position(1, 12)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::If, Position(1, 19)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Else, Position(1, 22)))
+        );
         assert_eq!(lexer.next(), None);
     }
 
@@ -262,19 +410,55 @@ mod tests {
     fn test_op_tokens() {
         let input = String::from("+-*/=!<>!= <= >= ==");
         let mut lexer = Lexer::new(input);
-        assert_eq!(lexer.next(), Some(Token::Plus));
-        assert_eq!(lexer.next(), Some(Token::Minus));
-        assert_eq!(lexer.next(), Some(Token::Asterisk));
-        assert_eq!(lexer.next(), Some(Token::Slash));
-        assert_eq!(lexer.next(), Some(Token::Equals));
-        assert_eq!(lexer.next(), Some(Token::Bang));
-        assert_eq!(lexer.next(), Some(Token::LessThan));
-        assert_eq!(lexer.next(), Some(Token::GreaterThan));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Plus, Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Minus, Position(1, 2)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Asterisk, Position(1, 3)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Slash, Position(1, 4)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Equals, Position(1, 5)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Bang, Position(1, 6)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LessThan, Position(1, 7)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::GreaterThan, Position(1, 8)))
+        );
 
-        assert_eq!(lexer.next(), Some(Token::BangEquals));
-        assert_eq!(lexer.next(), Some(Token::LessThanEquals));
-        assert_eq!(lexer.next(), Some(Token::GreaterThanEquals));
-        assert_eq!(lexer.next(), Some(Token::EqualsEquals));
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::BangEquals, Position(1, 9)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LessThanEquals, Position(1, 12)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::GreaterThanEquals, Position(1, 15)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::EqualsEquals, Position(1, 18)))
+        );
         assert_eq!(lexer.next(), None);
     }
 
@@ -289,7 +473,7 @@ mod tests {
     }
 
     #[test]
-    fn test_fuck_whitespaces() {
+    fn test_skip_whitespaces() {
         let input = String::from("  80085");
         let mut lexer = Lexer::new(input.clone());
         lexer.fuck_whitespaces();
@@ -329,5 +513,89 @@ mod tests {
         assert!(lexer.peek_char_is('k'));
         lexer.read_char();
         assert!(!lexer.peek_char_is('k'));
+    }
+
+    #[test]
+    fn test_position_with_newlines() {
+        let input = String::from("if\ntrue");
+        let mut lexer = Lexer::new(input);
+
+        let token1 = lexer.next().unwrap();
+        assert_eq!(token1, Token::new(TokenKind::If, Position(1, 1)));
+
+        let token2 = lexer.next().unwrap();
+        assert_eq!(token2, Token::new(TokenKind::True, Position(2, 1)));
+    }
+
+    #[test]
+    fn test_multiline_position() {
+        let input = String::from("let x = 10;\nif x > 5 {\n  return true;\n}");
+        let mut lexer = Lexer::new(input);
+
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Let, Position(1, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(
+                TokenKind::Identifier("x".to_string()),
+                Position(1, 5)
+            ))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Equals, Position(1, 7)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Integer(10), Position(1, 9)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::SemiColon, Position(1, 11)))
+        );
+
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::If, Position(2, 1)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(
+                TokenKind::Identifier("x".to_string()),
+                Position(2, 4)
+            ))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::GreaterThan, Position(2, 6)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Integer(5), Position(2, 8)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::LeftCurly, Position(2, 10)))
+        );
+
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::Return, Position(3, 3)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::True, Position(3, 10)))
+        );
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::SemiColon, Position(3, 14)))
+        );
+
+        assert_eq!(
+            lexer.next(),
+            Some(Token::new(TokenKind::RightCurly, Position(4, 1)))
+        );
     }
 }

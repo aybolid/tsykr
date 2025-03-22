@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node, Statement};
 
@@ -13,7 +13,7 @@ impl ReturnStatement {
     /// Creates a new return statement node.
     /// Asserts that the token is a `Token::Return`.
     pub fn new(token: Token, value: Box<dyn Expression>) -> Self {
-        assert_eq!(token, Token::Return, "expected return token");
+        assert_eq!(token.kind, TokenKind::Return, "expected return token");
         ReturnStatement { token, value }
     }
 }
@@ -42,12 +42,12 @@ impl Statement for ReturnStatement {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::parser::Boolean;
+    use crate::{lexer::Position, parser::Boolean};
 
     #[test]
     fn test_return_statement() {
-        let token = Token::Return;
-        let bool = Boolean::new(Token::True);
+        let token = Token::new(TokenKind::Return, Position(0, 0));
+        let bool = Boolean::new(Token::new(TokenKind::True, Position(0, 0)));
 
         let stmt = ReturnStatement::new(token.clone(), Box::new(bool));
 

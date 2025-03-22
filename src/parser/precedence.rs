@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 /// Expression precedence
 #[derive(Debug, PartialEq, PartialOrd)]
@@ -22,18 +22,18 @@ pub enum Precedence {
 
 impl Precedence {
     pub fn from_token(token: Token) -> Self {
-        match token {
-            Token::EqualsEquals | Token::BangEquals => Self::Equals,
+        match token.kind {
+            TokenKind::EqualsEquals | TokenKind::BangEquals => Self::Equals,
 
-            Token::GreaterThan
-            | Token::LessThan
-            | Token::GreaterThanEquals
-            | Token::LessThanEquals => Self::LessOrGreater,
+            TokenKind::GreaterThan
+            | TokenKind::LessThan
+            | TokenKind::GreaterThanEquals
+            | TokenKind::LessThanEquals => Self::LessOrGreater,
 
-            Token::Plus | Token::Minus => Self::Sum,
-            Token::Asterisk | Token::Slash => Self::Product,
-            Token::LeftParen => Self::Call,
-            Token::LeftBracket => Self::Index,
+            TokenKind::Plus | TokenKind::Minus => Self::Sum,
+            TokenKind::Asterisk | TokenKind::Slash => Self::Product,
+            TokenKind::LeftParen => Self::Call,
+            TokenKind::LeftBracket => Self::Index,
 
             _ => Self::Lowest,
         }

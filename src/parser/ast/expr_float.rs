@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
@@ -12,7 +12,10 @@ impl Float {
     /// Creates a new float node from a token.
     /// Asserts that the token is a `Token::Float`.
     pub fn new(token: Token) -> Self {
-        assert!(matches!(token, Token::Float(_)), "expected float token");
+        assert!(
+            matches!(token.kind, TokenKind::Float(_)),
+            "expected float token"
+        );
 
         Self { token }
     }
@@ -38,11 +41,13 @@ impl Expression for Float {}
 
 #[cfg(test)]
 mod tests {
+    use crate::lexer::Position;
+
     use super::*;
 
     #[test]
     fn test_float_node() {
-        let token = Token::Float(2.23);
+        let token = Token::new(TokenKind::Float(2.23), Position(0, 0));
         let float = Float::new(token.clone());
 
         assert!(float.as_any().is::<Float>());

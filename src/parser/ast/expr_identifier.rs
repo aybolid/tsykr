@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
@@ -13,7 +13,7 @@ impl Identifier {
     /// Asserts that the token is a `Token::Identifier`.
     pub fn new(token: Token) -> Self {
         assert!(
-            matches!(token, Token::Identifier(_)),
+            matches!(token.kind, TokenKind::Identifier(_)),
             "expected identifier token"
         );
 
@@ -41,11 +41,13 @@ impl Expression for Identifier {}
 
 #[cfg(test)]
 mod tests {
+    use crate::lexer::Position;
+
     use super::*;
 
     #[test]
     fn test_identifier_node() {
-        let token = Token::Identifier("cool".to_string());
+        let token = Token::new(TokenKind::Identifier("cool".to_string()), Position(0, 0));
         let ident = Identifier::new(token.clone());
 
         assert_eq!(ident.token, token);

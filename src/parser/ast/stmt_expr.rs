@@ -37,14 +37,20 @@ impl Statement for ExpressionStatement {}
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::Token;
+    use crate::lexer::{Position, Token, TokenKind};
     use crate::parser::{Infixed, Integer};
 
     #[test]
     fn test_expression_statement() {
-        let token = Token::Minus;
-        let left = Box::new(Integer::new(Token::Integer(42)));
-        let right = Box::new(Integer::new(Token::Integer(42)));
+        let token = Token::new(TokenKind::Minus, Position(0, 0));
+        let left = Box::new(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
+        let right = Box::new(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
         let infixed = Infixed::new(token.clone(), left, right);
         let expression_statement = ExpressionStatement::new(token.clone(), Box::new(infixed));
 

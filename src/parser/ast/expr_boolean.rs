@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
@@ -12,7 +12,7 @@ impl Boolean {
     /// Creates a new boolean node from a token.
     /// Asserts that the token is either `Token::True` or `Token::False`.
     pub fn new(token: Token) -> Self {
-        assert!(token == Token::True || token == Token::False);
+        assert!(token.kind == TokenKind::True || token.kind == TokenKind::False);
 
         Self { token }
     }
@@ -38,11 +38,13 @@ impl Expression for Boolean {}
 
 #[cfg(test)]
 mod tests {
+    use crate::lexer::Position;
+
     use super::*;
 
     #[test]
     fn test_boolean_node() {
-        let token = Token::True;
+        let token = Token::new(TokenKind::True, Position(0, 0));
         let boolean = Boolean::new(token.clone());
 
         assert!(boolean.as_any().is::<Boolean>());

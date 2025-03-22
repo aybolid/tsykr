@@ -1,4 +1,4 @@
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
@@ -14,7 +14,7 @@ impl Prefixed {
     /// Creates a new prefixed node from a token.
     /// Asserts that the token is either `Token::Bang` or `Token::Minus`.
     pub fn new(op: Token, right: Box<dyn Expression>) -> Self {
-        assert!(op == Token::Bang || op == Token::Minus);
+        assert!(op.kind == TokenKind::Bang || op.kind == TokenKind::Minus);
 
         Self { op, right }
     }
@@ -44,14 +44,17 @@ impl Expression for Prefixed {}
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::Integer;
+    use crate::{lexer::Position, parser::Integer};
 
     use super::*;
 
     #[test]
     fn test_prefixed_node() {
-        let token = Token::Minus;
-        let right = Box::new(Integer::new(Token::Integer(42)));
+        let token = Token::new(TokenKind::Minus, Position(0, 0));
+        let right = Box::new(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
         let prefixed = Prefixed::new(token.clone(), right);
 
         assert_eq!(prefixed.op, token);

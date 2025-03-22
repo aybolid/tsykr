@@ -1,7 +1,7 @@
 use std::fmt::Display;
 
 #[derive(Debug, PartialEq, Clone)]
-pub enum Token {
+pub enum TokenKind {
     Plus,
     Equals,
     Minus,
@@ -43,20 +43,20 @@ pub enum Token {
     ILLEGAL(char),
 }
 
-impl Token {
-    /// If keyword, returns the corresponding keyword token.
-    /// Otherwise, returns an identifier token.
-    pub fn new_alphabetic(string: String) -> Token {
+impl TokenKind {
+    /// If keyword, returns the corresponding keyword token kind.
+    /// Otherwise, returns an identifier token kind.
+    pub fn new_alphabetic(string: String) -> Self {
         match &string[..] {
-            "let" => Token::Let,
-            "fn" => Token::Function,
-            "return" => Token::Return,
-            "if" => Token::If,
-            "else" => Token::Else,
-            "true" => Token::True,
-            "false" => Token::False,
+            "let" => Self::Let,
+            "fn" => Self::Function,
+            "return" => Self::Return,
+            "if" => Self::If,
+            "else" => Self::Else,
+            "true" => Self::True,
+            "false" => Self::False,
 
-            _ => Token::Identifier(string),
+            _ => Self::Identifier(string),
         }
     }
 
@@ -105,7 +105,7 @@ impl Token {
     }
 }
 
-impl Display for Token {
+impl Display for TokenKind {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::Identifier(name) => write!(f, "Identifier({})", name),
@@ -114,5 +114,39 @@ impl Display for Token {
             Self::ILLEGAL(c) => write!(f, "Illegal({})", c),
             _ => write!(f, "{}", self.literal()),
         }
+    }
+}
+
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct Position(pub usize, pub usize);
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Token {
+    pub kind: TokenKind,
+    pub position: Position,
+}
+
+impl Default for Token {
+    fn default() -> Self {
+        Self {
+            kind: TokenKind::ILLEGAL(' '),
+            position: Position(0, 0),
+        }
+    }
+}
+
+impl Token {
+    pub fn new(kind: TokenKind, position: Position) -> Self {
+        Self { kind, position }
+    }
+
+    pub fn literal(&self) -> String {
+        self.kind.literal()
+    }
+}
+
+impl Display for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", self.literal())
     }
 }

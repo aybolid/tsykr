@@ -1,5 +1,5 @@
 use super::{Block, Expression, Identifier, Node};
-use crate::lexer::Token;
+use crate::lexer::{Token, TokenKind};
 
 #[derive(Debug)]
 pub struct FunctionExpression {
@@ -10,7 +10,7 @@ pub struct FunctionExpression {
 
 impl FunctionExpression {
     pub fn new(token: Token, parameters: Vec<Identifier>, body: Block) -> Self {
-        assert_eq!(token, Token::Function);
+        assert_eq!(token.kind, TokenKind::Function);
         FunctionExpression {
             token,
             parameters,
@@ -54,34 +54,59 @@ impl Expression for FunctionExpression {}
 
 #[cfg(test)]
 mod tests {
-    use crate::parser::{Integer, LetStatement, ReturnStatement};
+    use crate::{
+        lexer::Position,
+        parser::{Integer, LetStatement, ReturnStatement},
+    };
 
     use super::*;
 
     #[test]
     fn test_function_expression() {
         let block = Block::new(
-            Token::LeftCurly,
+            Token::new(TokenKind::LeftCurly, Position(0, 0)),
             vec![
                 Box::new(LetStatement::new(
-                    Token::Let,
-                    Identifier::new(Token::Identifier("x".to_string())),
-                    Box::new(Integer::new(Token::Integer(5))),
+                    Token::new(TokenKind::Let, Position(0, 0)),
+                    Identifier::new(Token::new(
+                        TokenKind::Identifier("x".to_string()),
+                        Position(0, 0),
+                    )),
+                    Box::new(Integer::new(Token::new(
+                        TokenKind::Integer(5),
+                        Position(0, 0),
+                    ))),
                 )),
                 Box::new(ReturnStatement::new(
-                    Token::Return,
-                    Box::new(Identifier::new(Token::Identifier("x".to_string()))),
+                    Token::new(TokenKind::Return, Position(0, 0)),
+                    Box::new(Identifier::new(Token::new(
+                        TokenKind::Identifier("x".to_string()),
+                        Position(0, 0),
+                    ))),
                 )),
             ],
         );
         let params = vec![
-            Identifier::new(Token::Identifier("_a".to_string())),
-            Identifier::new(Token::Identifier("_b".to_string())),
+            Identifier::new(Token::new(
+                TokenKind::Identifier("_a".to_string()),
+                Position(0, 0),
+            )),
+            Identifier::new(Token::new(
+                TokenKind::Identifier("_b".to_string()),
+                Position(0, 0),
+            )),
         ];
-        let function = FunctionExpression::new(Token::Function, params, block);
+        let function = FunctionExpression::new(
+            Token::new(TokenKind::Function, Position(0, 0)),
+            params,
+            block,
+        );
 
         assert!(function.as_any().is::<FunctionExpression>());
-        assert_eq!(function.token, Token::Function);
+        assert_eq!(
+            function.token,
+            Token::new(TokenKind::Function, Position(0, 0))
+        );
         assert_eq!(function.token_literal(), function.token.literal());
         assert_eq!(
             function.to_string(),
