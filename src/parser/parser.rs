@@ -3,7 +3,7 @@ use thiserror::Error;
 use crate::lexer::{Lexer, Token};
 
 use super::{
-    precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float,
+    precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float, FunctionCall,
     FunctionDeclaration, FunctionExpression, Identifier, Infixed, Integer, LetStatement, Prefixed,
     Program, ReturnStatement, Statement,
 };
@@ -209,11 +209,55 @@ impl Parser {
                     self.next_token();
                     expr = Box::new(self.parse_infixed_expression(expr)?);
                 }
+                Token::LeftParen => {
+                    self.next_token();
+                    expr = Box::new(self.parse_function_call(expr)?);
+                }
                 _ => return Ok(expr),
             };
         }
 
         Ok(expr)
+    }
+
+    /// Parses a function call expression.
+    fn parse_function_call(
+        &mut self,
+        callee: Box<dyn Expression>,
+    ) -> Result<FunctionCall, ParserError> {
+        self.expect_current_token(Token::LeftParen)?;
+        let call_token = self.current_token.take().expect("checked before");
+        let arguments = self.parse_expression_list(Token::RightParen)?;
+
+        Ok(FunctionCall::new(call_token, callee, arguments))
+    }
+
+    /// Parses a list of expressions separated by commas.
+    /// `end_token` is the token that marks the end of the list.
+    fn parse_expression_list(
+        &mut self,
+        end_token: Token,
+    ) -> Result<Vec<Box<dyn Expression>>, ParserError> {
+        let mut list = vec![];
+
+        if self.peek_token.as_ref() == Some(&end_token) {
+            self.next_token();
+            return Ok(list);
+        }
+
+        self.next_token();
+        list.push(self.parse_expression(Precedence::Lowest)?);
+
+        while self.peek_token == Some(Token::Comma) {
+            self.next_token();
+            self.next_token();
+            list.push(self.parse_expression(Precedence::Lowest)?);
+        }
+
+        self.expect_peek_token(Token::RightParen)?;
+        self.next_token();
+
+        Ok(list)
     }
 
     fn parse_function_expression(&mut self) -> Result<FunctionExpression, ParserError> {
@@ -457,6 +501,23 @@ mod tests {
         if let Ok(()) = parser.expect_peek_token(Token::If) {
             panic!("expect_next_token should fail at this point");
         }
+    }
+
+    #[test]
+    fn test_parse_function_call_expression() {
+        let lexer = Lexer::new("(1, 2)".to_string());
+        let mut parser = Parser::new(lexer);
+        let call = parser
+            .parse_function_call(Box::new(Identifier::new(Token::Identifier(
+                "foo".to_string(),
+            ))))
+            .unwrap();
+
+        assert!(call.as_any().is::<FunctionCall>());
+        assert_eq!(call.function.to_string(), "foo");
+        assert_eq!(call.arguments.len(), 2);
+        assert_eq!(call.arguments[0].to_string(), "1");
+        assert_eq!(call.arguments[1].to_string(), "2");
     }
 
     #[test]

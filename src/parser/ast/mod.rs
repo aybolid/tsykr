@@ -1,4 +1,5 @@
 mod expr_boolean;
+mod expr_call;
 mod expr_float;
 mod expr_function;
 mod expr_identifier;
@@ -15,6 +16,7 @@ mod stmt_return;
 use std::fmt::Debug;
 
 pub use expr_boolean::*;
+pub use expr_call::*;
 pub use expr_float::*;
 pub use expr_function::*;
 pub use expr_identifier::*;
