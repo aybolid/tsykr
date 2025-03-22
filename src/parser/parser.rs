@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use thiserror::Error;
 
 use crate::lexer::{Lexer, Token, TokenKind};
@@ -11,13 +13,13 @@ use super::{
 #[derive(Debug, PartialEq, Error)]
 pub enum ParserError {
     #[error("Unexpected token: {0}")]
-    IDontWantThis(Token),
-    #[error("Unexpected token: wanted {expected} but found {actual}")]
-    IWantThisNotThat { expected: TokenKind, actual: Token },
-    #[error("Unexpected end of input but wanted {0}")]
-    WhyNothingIfIWantThis(TokenKind),
+    InvalidToken(Token),
+    #[error("Unexpected token: wanted {expected}; got {actual}")]
+    UnexpectedToken { expected: TokenKind, actual: Token },
+    #[error("Unexpected end of input: expected {0}")]
+    UnexpectedEOFWithExpectation(TokenKind),
     #[error("Unexpected end of input")]
-    WhereIsEverybody,
+    UnexpectedEOF,
 }
 
 #[derive(Debug)]
@@ -43,6 +45,7 @@ impl Parser {
     /// Parses a program.
     /// Returns a `Result` containing a `Program` or a vector of `ParserError`s.
     pub fn parse(&mut self) -> Result<Program, Vec<ParserError>> {
+        let start_time = Instant::now();
         let mut program = Program::new();
 
         let mut errors = vec![];
@@ -62,6 +65,15 @@ impl Parser {
 
         if !errors.is_empty() {
             return Err(errors);
+        }
+
+        #[cfg(debug_assertions)]
+        {
+            println!("{program:#?}");
+            println!("Reconstructed AST:");
+            println!("{}", program.to_string());
+            println!();
+            println!("Parsing took: {:.2?}", start_time.elapsed());
         }
 
         Ok(program)
@@ -84,11 +96,11 @@ impl Parser {
                     Ok(Box::new(self.parse_function_declaration_statement()?))
                 }
                 TokenKind::LeftCurly => Ok(Box::new(self.parse_block_statement()?)),
-                TokenKind::ILLEGAL(_) => Err(ParserError::IDontWantThis(token.clone())),
+                TokenKind::ILLEGAL(_) => Err(ParserError::InvalidToken(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
             }
         } else {
-            Err(ParserError::WhereIsEverybody)
+            Err(ParserError::UnexpectedEOF)
         }
     }
 
@@ -175,7 +187,7 @@ impl Parser {
     /// Parses an expression statement
     fn parse_expression_statement(&mut self) -> Result<ExpressionStatement, ParserError> {
         if self.current_token.is_none() {
-            return Err(ParserError::WhereIsEverybody);
+            return Err(ParserError::UnexpectedEOF);
         }
 
         // clone token as it will be consumed by the expression parser
@@ -200,7 +212,7 @@ impl Parser {
         precedence: Precedence,
     ) -> Result<Box<dyn Expression>, ParserError> {
         if self.current_token.is_none() {
-            return Err(ParserError::WhereIsEverybody);
+            return Err(ParserError::UnexpectedEOF);
         }
 
         let mut expr: Box<dyn Expression> =
@@ -215,7 +227,7 @@ impl Parser {
                 TokenKind::LeftParen => self.parse_grouped_expression()?,
 
                 _ => {
-                    return Err(ParserError::IDontWantThis(
+                    return Err(ParserError::InvalidToken(
                         self.current_token.clone().unwrap(),
                     ))
                 }
@@ -448,11 +460,13 @@ impl Parser {
     ) -> Result<(), ParserError> {
         match &self.peek_token {
             Some(token) if token.kind == expected_token_kind => Ok(()),
-            Some(token) => Err(ParserError::IWantThisNotThat {
+            Some(token) => Err(ParserError::UnexpectedToken {
                 expected: expected_token_kind,
                 actual: token.clone(),
             }),
-            None => Err(ParserError::WhyNothingIfIWantThis(expected_token_kind)),
+            None => Err(ParserError::UnexpectedEOFWithExpectation(
+                expected_token_kind,
+            )),
         }
     }
 
@@ -465,11 +479,13 @@ impl Parser {
     ) -> Result<(), ParserError> {
         match &self.current_token {
             Some(token) if token.kind == expected_token_kind => Ok(()),
-            Some(token) => Err(ParserError::IWantThisNotThat {
+            Some(token) => Err(ParserError::UnexpectedToken {
                 expected: expected_token_kind,
                 actual: token.clone(),
             }),
-            None => Err(ParserError::WhyNothingIfIWantThis(expected_token_kind)),
+            None => Err(ParserError::UnexpectedEOFWithExpectation(
+                expected_token_kind,
+            )),
         }
     }
 
@@ -482,8 +498,8 @@ impl Parser {
     {
         match &self.current_token {
             Some(token) if predicate(token) => Ok(()),
-            Some(token) => Err(ParserError::IDontWantThis(token.clone())),
-            None => Err(ParserError::WhereIsEverybody),
+            Some(token) => Err(ParserError::InvalidToken(token.clone())),
+            None => Err(ParserError::UnexpectedEOF),
         }
     }
 
@@ -497,8 +513,8 @@ impl Parser {
     {
         match &self.peek_token {
             Some(token) if predicate(token) => Ok(()),
-            Some(token) => Err(ParserError::IDontWantThis(token.clone())),
-            None => Err(ParserError::WhereIsEverybody),
+            Some(token) => Err(ParserError::InvalidToken(token.clone())),
+            None => Err(ParserError::UnexpectedEOF),
         }
     }
 }
@@ -847,7 +863,7 @@ mod tests {
                 assert_eq!(errors.len(), 1);
                 assert_eq!(
                     errors[0],
-                    ParserError::IDontWantThis(Token::new(TokenKind::ILLEGAL('№'), Position(1, 1)))
+                    ParserError::InvalidToken(Token::new(TokenKind::ILLEGAL('№'), Position(1, 1)))
                 )
             }
             _ => panic!("expected to fail"),
@@ -858,7 +874,7 @@ mod tests {
         match parser.parse() {
             Err(errors) => {
                 assert_eq!(errors.len(), 1);
-                assert_eq!(errors[0], ParserError::WhereIsEverybody)
+                assert_eq!(errors[0], ParserError::UnexpectedEOF)
             }
             _ => panic!("expected to fail"),
         };
@@ -870,7 +886,7 @@ mod tests {
                 assert_eq!(errors.len(), 1);
                 assert_eq!(
                     errors[0],
-                    ParserError::IDontWantThis(Token::new(TokenKind::Integer(13), Position(1, 5)))
+                    ParserError::InvalidToken(Token::new(TokenKind::Integer(13), Position(1, 5)))
                 )
             }
             _ => panic!("expected to fail"),
@@ -883,7 +899,7 @@ mod tests {
                 assert_eq!(errors.len(), 1);
                 assert_eq!(
                     errors[0],
-                    ParserError::WhyNothingIfIWantThis(TokenKind::Equals)
+                    ParserError::UnexpectedEOFWithExpectation(TokenKind::Equals)
                 )
             }
             _ => panic!("expected to fail"),

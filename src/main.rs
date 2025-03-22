@@ -20,12 +20,7 @@ fn main() -> Result<()> {
             let lexer = Lexer::new(content);
             let mut parser = parser::Parser::new(lexer);
             match parser.parse() {
-                Ok(program) => {
-                    println!("{program:#?}");
-                    println!("Reconstructed AST:");
-                    println!("{}", program.to_string());
-                    println!()
-                }
+                Ok(_) => {}
                 Err(errs) => {
                     eprintln!("Parser errors:");
                     for err in errs {

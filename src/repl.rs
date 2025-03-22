@@ -9,7 +9,7 @@ pub fn run() {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
 
-    println!("Starting the tsykr REPL...");
+    println!("Starting tsykr REPL...");
 
     loop {
         print!("{PROMPT}");
@@ -21,12 +21,7 @@ pub fn run() {
         let mut parser = Parser::new(lexer);
 
         match parser.parse() {
-            Ok(program) => {
-                println!("{program:#?}");
-                println!("Reconstructed AST:");
-                println!("{}", program.to_string());
-                println!()
-            }
+            Ok(_) => {}
             Err(errs) => {
                 eprintln!("Parser errors:");
                 for err in errs {
