@@ -20,6 +20,13 @@ pub enum EvalError {
         operand: String,
         position: Position,
     },
+    #[error("Invalid infix operation: {left} {operator} {right} - {position}")]
+    InvalidInfixOperation {
+        operator: String,
+        left: String,
+        right: String,
+        position: Position,
+    },
 }
 
 pub trait Eval {

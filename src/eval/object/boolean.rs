@@ -16,6 +16,14 @@ impl BooleanObject {
             TRUE
         }
     }
+
+    pub fn object_from_bool(value: bool) -> Object {
+        if value {
+            TRUE
+        } else {
+            FALSE
+        }
+    }
 }
 
 impl ObjectImpl for BooleanObject {
