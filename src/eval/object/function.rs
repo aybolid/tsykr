@@ -1,9 +1,9 @@
 use super::{Object, ObjectImpl};
 use crate::{
-    eval::ExecEnvironment,
+    eval::{Eval, EvalError, ExecEnvironment},
     parser::{Block, Identifier},
 };
-use std::rc::Rc;
+use std::{rc::Rc, sync::Arc};
 
 #[derive(Debug)]
 pub struct FunctionObject {
@@ -19,6 +19,16 @@ impl FunctionObject {
 
     pub fn new_object(env: Rc<ExecEnvironment>, params: Vec<Identifier>, body: Block) -> Object {
         Object::FUNCTION(Self::new(env, params, body))
+    }
+
+    pub fn call(&self, args: Vec<Arc<Object>>) -> Result<Option<Arc<Object>>, EvalError> {
+        let mut function_env = ExecEnvironment::new_enclosed(self.env.clone());
+
+        for (param, arg) in self.params.iter().zip(args.iter()) {
+            function_env.set(param.to_string(), Arc::clone(arg));
+        }
+
+        self.body.eval(&mut function_env)
     }
 }
 

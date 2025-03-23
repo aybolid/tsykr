@@ -1,5 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
+use eval::ExecEnvironment;
 use lexer::Lexer;
 
 mod eval;
@@ -18,10 +19,16 @@ fn main() -> Result<()> {
     match args.path {
         Some(path) => {
             let content = std::fs::read_to_string(path)?;
+
             let lexer = Lexer::new(content);
             let mut parser = parser::Parser::new(lexer);
+
+            let mut env = ExecEnvironment::new();
+
             match parser.parse() {
-                Ok(_) => {}
+                Ok(program) => {
+                    program.eval_program(&mut env);
+                }
                 Err(errs) => {
                     eprintln!("Parser errors:");
                     for err in errs {

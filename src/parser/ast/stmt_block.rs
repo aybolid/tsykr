@@ -48,7 +48,14 @@ impl Node for Block {
 
 impl Eval for Block {
     fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
-        todo!()
+        let mut result = None;
+        for statement in &self.statements {
+            let evaluated = statement.eval(_env)?;
+            if let Some(obj) = evaluated {
+                result = Some(obj);
+            }
+        }
+        Ok(result)
     }
 }
 
