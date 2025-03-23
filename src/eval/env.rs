@@ -40,11 +40,6 @@ impl ExecEnvironment {
     pub fn set(&self, key: String, value: Arc<Object>) {
         self.store.borrow_mut().insert(key, value);
     }
-
-    // Optional: method to directly set in current scope without checking outer
-    pub fn set_local(&self, key: String, value: Arc<Object>) {
-        self.store.borrow_mut().insert(key, value);
-    }
 }
 
 impl PartialEq for ExecEnvironment {
