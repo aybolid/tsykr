@@ -38,7 +38,7 @@ impl Node for ExpressionStatement {
 }
 
 impl Eval for ExpressionStatement {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
+    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         self.expression.eval(env)
     }
 }

@@ -1,6 +1,7 @@
-use super::{Object, ObjectKind};
+use super::ObjectImpl;
 
-pub struct IntegerObject(i64);
+#[derive(Debug, PartialEq)]
+pub struct IntegerObject(pub i64);
 
 impl IntegerObject {
     pub fn new(value: i64) -> Self {
@@ -8,11 +9,7 @@ impl IntegerObject {
     }
 }
 
-impl Object for IntegerObject {
-    fn kind(&self) -> ObjectKind {
-        ObjectKind::INTEGER
-    }
-
+impl ObjectImpl for IntegerObject {
     fn inspect(&self) -> String {
         format!("{}", self.0)
     }

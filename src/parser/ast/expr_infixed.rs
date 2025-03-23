@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    eval::{Eval, ExecEnvironment},
+    eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::Token,
 };
 
@@ -45,10 +45,7 @@ impl Node for Infixed {
 }
 
 impl Eval for Infixed {
-    fn eval(
-        &self,
-        _env: &mut ExecEnvironment,
-    ) -> Result<Option<Arc<dyn crate::eval::Object>>, crate::eval::EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         todo!()
     }
 }

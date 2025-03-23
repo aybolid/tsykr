@@ -1,5 +1,6 @@
-use super::{Object, ObjectKind};
+use super::ObjectImpl;
 
+#[derive(Debug, PartialEq)]
 pub struct FloatObject(f64);
 
 impl FloatObject {
@@ -8,11 +9,7 @@ impl FloatObject {
     }
 }
 
-impl Object for FloatObject {
-    fn kind(&self) -> ObjectKind {
-        ObjectKind::FLOAT
-    }
-
+impl ObjectImpl for FloatObject {
     fn inspect(&self) -> String {
         format!("{}", self.0)
     }

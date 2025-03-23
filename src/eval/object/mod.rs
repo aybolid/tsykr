@@ -7,14 +7,24 @@ pub use float::*;
 pub use integer::*;
 
 #[derive(Debug, PartialEq)]
-pub enum ObjectKind {
-    INTEGER,
-    FLOAT,
-    BOOLEAN,
+pub enum Object {
+    INTEGER(IntegerObject),
+    FLOAT(FloatObject),
+    BOOLEAN(BooleanObject),
 }
 
-pub trait Object {
+impl Object {
     #[allow(unused)]
-    fn kind(&self) -> ObjectKind;
+    pub fn inspect(&self) -> String {
+        match self {
+            Object::INTEGER(i) => i.inspect(),
+            Object::FLOAT(f) => f.inspect(),
+            Object::BOOLEAN(b) => b.inspect(),
+        }
+    }
+}
+
+pub trait ObjectImpl {
+    #[allow(unused)]
     fn inspect(&self) -> String;
 }

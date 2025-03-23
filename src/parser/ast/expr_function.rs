@@ -2,7 +2,7 @@ use std::sync::Arc;
 
 use super::{Block, Expression, Identifier, Node};
 use crate::{
-    eval::{Eval, ExecEnvironment},
+    eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::{Token, TokenKind},
 };
 
@@ -56,10 +56,7 @@ impl Node for FunctionExpression {
 }
 
 impl Eval for FunctionExpression {
-    fn eval(
-        &self,
-        _env: &mut ExecEnvironment,
-    ) -> Result<Option<Arc<dyn crate::eval::Object>>, crate::eval::EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         todo!()
     }
 }

@@ -52,7 +52,7 @@ impl Node for LetStatement {
 }
 
 impl Eval for LetStatement {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
+    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         let value = (self.value.eval(env)?).expect("dont think its possible");
         env.set(self.identifier.to_string(), value);
         Ok(None)

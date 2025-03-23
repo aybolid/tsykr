@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    eval::{Eval, ExecEnvironment},
+    eval::{Eval, EvalError, ExecEnvironment, IntegerObject, Object, FALSE, TRUE},
     lexer::{Token, TokenKind},
 };
 
@@ -46,11 +46,30 @@ impl Node for Prefixed {
 }
 
 impl Eval for Prefixed {
-    fn eval(
-        &self,
-        _env: &mut ExecEnvironment,
-    ) -> Result<Option<Arc<dyn crate::eval::Object>>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+        let operand = (self.right.eval(env)?).expect("all expressions return smth");
+        match self.op.kind {
+            TokenKind::Bang => match &*operand {
+                Object::BOOLEAN(b) => match b.0 {
+                    true => Ok(Some(Arc::new(FALSE))),
+                    false => Ok(Some(Arc::new(TRUE))),
+                },
+                _ => Err(EvalError::InvalidPrefixOperation {
+                    operator: self.op.literal(),
+                    operand: operand.inspect(),
+                    position: self.op.position,
+                }),
+            },
+            TokenKind::Minus => match &*operand {
+                Object::INTEGER(i) => Ok(Some(Arc::new(Object::INTEGER(IntegerObject(-i.0))))),
+                _ => Err(EvalError::InvalidPrefixOperation {
+                    operator: self.op.literal(),
+                    operand: operand.inspect(),
+                    position: self.op.position,
+                }),
+            },
+            _ => unreachable!(),
+        }
     }
 }
 

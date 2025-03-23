@@ -43,7 +43,7 @@ impl Node for ReturnStatement {
 }
 
 impl Eval for ReturnStatement {
-    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         todo!()
     }
 }

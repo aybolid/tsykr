@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    eval::{Eval, ExecEnvironment, FALSE, TRUE},
+    eval::{Eval, EvalError, ExecEnvironment, Object, FALSE, TRUE},
     lexer::{Token, TokenKind},
 };
 
@@ -40,10 +40,7 @@ impl Node for Boolean {
 }
 
 impl Eval for Boolean {
-    fn eval(
-        &self,
-        _env: &mut ExecEnvironment,
-    ) -> Result<Option<Arc<dyn crate::eval::Object>>, crate::eval::EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         match self.token.kind {
             TokenKind::True => Ok(Some(Arc::new(TRUE))),
             TokenKind::False => Ok(Some(Arc::new(FALSE))),
@@ -56,7 +53,7 @@ impl Expression for Boolean {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{eval::ObjectKind, lexer::Position};
+    use crate::lexer::Position;
 
     use super::*;
 
@@ -78,14 +75,14 @@ mod tests {
         let boolean = Boolean::new(token);
 
         let result = boolean.eval(&mut env).unwrap().unwrap();
-        assert_eq!(result.kind(), ObjectKind::BOOLEAN);
+        assert_eq!(result, Arc::new(TRUE));
         assert_eq!(result.inspect(), "true");
 
         let token = Token::new(TokenKind::False, Position(0, 0));
         let boolean = Boolean::new(token);
 
         let result = boolean.eval(&mut env).unwrap().unwrap();
-        assert_eq!(result.kind(), ObjectKind::BOOLEAN);
+        assert_eq!(result, Arc::new(FALSE));
         assert_eq!(result.inspect(), "false");
     }
 }

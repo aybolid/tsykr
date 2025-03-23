@@ -43,9 +43,9 @@ impl Node for Float {
 }
 
 impl Eval for Float {
-    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<dyn Object>>, EvalError> {
+    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         match self.token.kind {
-            TokenKind::Float(value) => Ok(Some(Arc::new(FloatObject::new(value)))),
+            TokenKind::Float(value) => Ok(Some(Arc::new(Object::FLOAT(FloatObject::new(value))))),
             _ => unreachable!(),
         }
     }
@@ -55,7 +55,7 @@ impl Expression for Float {}
 
 #[cfg(test)]
 mod tests {
-    use crate::{eval::ObjectKind, lexer::Position};
+    use crate::lexer::Position;
 
     use super::*;
 
@@ -77,7 +77,7 @@ mod tests {
         let float = Float::new(token.clone());
 
         let result = float.eval(&mut env).unwrap().unwrap();
-        assert_eq!(result.kind(), ObjectKind::FLOAT);
+        assert_eq!(result, Arc::new(Object::FLOAT(FloatObject::new(2.23))));
         assert_eq!(result.inspect(), "2.23");
     }
 }
