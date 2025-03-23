@@ -1,7 +1,7 @@
 use super::{Object, ObjectImpl};
 
 #[derive(Debug, PartialEq)]
-pub struct FloatObject(f64);
+pub struct FloatObject(pub f64);
 
 impl FloatObject {
     pub fn new(value: f64) -> Self {
@@ -10,6 +10,10 @@ impl FloatObject {
 
     pub fn new_object(value: f64) -> Object {
         Object::FLOAT(FloatObject::new(value))
+    }
+
+    pub fn negated_object(&self) -> Object {
+        Object::FLOAT(FloatObject::new(-self.0))
     }
 }
 

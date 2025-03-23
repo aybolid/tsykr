@@ -59,6 +59,7 @@ impl Eval for Prefixed {
             },
             TokenKind::Minus => match &*operand {
                 Object::INTEGER(i) => Ok(Some(Arc::new(i.negated_object()))),
+                Object::FLOAT(f) => Ok(Some(Arc::new(f.negated_object()))),
                 _ => Err(EvalError::InvalidPrefixOperation {
                     operator: self.op.literal(),
                     operand: operand.inspect(),

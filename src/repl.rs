@@ -19,8 +19,8 @@ pub fn run() {
         stdin.read_line(&mut buf).unwrap();
 
         let lexer = Lexer::new(buf);
-        let mut parser = Parser::new(lexer);
-
+        let mut parser = Parser::new(&lexer);
+        lexer;
         match parser.parse() {
             Ok(program) => {
                 program.eval_program(&mut env);
