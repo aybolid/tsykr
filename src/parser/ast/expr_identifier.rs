@@ -5,10 +5,10 @@ use crate::{
     lexer::{Token, TokenKind},
 };
 
-use super::{Expression, Node};
+use super::Node;
 
 /// Identifier ast node.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Identifier {
     pub token: Token,
 }
@@ -53,8 +53,6 @@ impl Eval for Identifier {
         }
     }
 }
-
-impl Expression for Identifier {}
 
 #[cfg(test)]
 mod tests {

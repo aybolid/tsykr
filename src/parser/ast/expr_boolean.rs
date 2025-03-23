@@ -5,10 +5,10 @@ use crate::{
     lexer::{Token, TokenKind},
 };
 
-use super::{Expression, Node};
+use super::Node;
 
 /// Boolean ast node.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Boolean {
     pub token: Token,
 }
@@ -48,8 +48,6 @@ impl Eval for Boolean {
         }
     }
 }
-
-impl Expression for Boolean {}
 
 #[cfg(test)]
 mod tests {

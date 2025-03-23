@@ -2,6 +2,7 @@ use std::{collections::HashMap, sync::Arc};
 
 use super::Object;
 
+#[derive(Debug, Clone)]
 pub struct ExecEnvironment {
     store: HashMap<String, Arc<Object>>,
 }

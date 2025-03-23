@@ -5,10 +5,10 @@ use crate::{
     lexer::{Token, TokenKind},
 };
 
-use super::{Expression, Node};
+use super::Node;
 
 /// Float ast node.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Float {
     pub token: Token,
 }
@@ -50,8 +50,6 @@ impl Eval for Float {
         }
     }
 }
-
-impl Expression for Float {}
 
 #[cfg(test)]
 mod tests {

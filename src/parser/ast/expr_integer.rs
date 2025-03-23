@@ -5,10 +5,10 @@ use crate::{
     lexer::{Token, TokenKind},
 };
 
-use super::{Expression, Node};
+use super::Node;
 
 /// Integer ast node.
-#[derive(Debug)]
+#[derive(Debug, PartialEq, Clone)]
 pub struct Integer {
     pub token: Token,
 }
@@ -50,8 +50,6 @@ impl Eval for Integer {
         }
     }
 }
-
-impl Expression for Integer {}
 
 #[cfg(test)]
 mod tests {
