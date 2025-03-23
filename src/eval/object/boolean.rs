@@ -8,6 +8,16 @@ pub const FALSE: Object = Object::BOOLEAN(BooleanObject(false));
 #[derive(Debug, PartialEq)]
 pub struct BooleanObject(pub bool);
 
+impl BooleanObject {
+    pub fn negated_object(&self) -> Object {
+        if self.0 {
+            FALSE
+        } else {
+            TRUE
+        }
+    }
+}
+
 impl ObjectImpl for BooleanObject {
     fn inspect(&self) -> String {
         format!("{}", self.0)

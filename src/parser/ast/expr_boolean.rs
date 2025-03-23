@@ -75,14 +75,14 @@ mod tests {
         let boolean = Boolean::new(token);
 
         let result = boolean.eval(&mut env).unwrap().unwrap();
-        assert_eq!(result, Arc::new(TRUE));
+        assert_eq!(*result, TRUE);
         assert_eq!(result.inspect(), "true");
 
         let token = Token::new(TokenKind::False, Position(0, 0));
         let boolean = Boolean::new(token);
 
         let result = boolean.eval(&mut env).unwrap().unwrap();
-        assert_eq!(result, Arc::new(FALSE));
+        assert_eq!(*result, FALSE);
         assert_eq!(result.inspect(), "false");
     }
 }

@@ -1,4 +1,4 @@
-use super::ObjectImpl;
+use super::{Object, ObjectImpl};
 
 #[derive(Debug, PartialEq)]
 pub struct IntegerObject(pub i64);
@@ -6,6 +6,14 @@ pub struct IntegerObject(pub i64);
 impl IntegerObject {
     pub fn new(value: i64) -> Self {
         Self(value)
+    }
+
+    pub fn new_object(value: i64) -> Object {
+        Object::INTEGER(Self::new(value))
+    }
+
+    pub fn negated_object(&self) -> Object {
+        Object::INTEGER(Self::new(-self.0))
     }
 }
 

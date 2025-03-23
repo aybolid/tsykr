@@ -1,7 +1,7 @@
 use std::sync::Arc;
 
 use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, IntegerObject, Object, FALSE, TRUE},
+    eval::{Eval, EvalError, ExecEnvironment, Object},
     lexer::{Token, TokenKind},
 };
 
@@ -50,10 +50,7 @@ impl Eval for Prefixed {
         let operand = (self.right.eval(env)?).expect("all expressions return smth");
         match self.op.kind {
             TokenKind::Bang => match &*operand {
-                Object::BOOLEAN(b) => match b.0 {
-                    true => Ok(Some(Arc::new(FALSE))),
-                    false => Ok(Some(Arc::new(TRUE))),
-                },
+                Object::BOOLEAN(b) => Ok(Some(Arc::new(b.negated_object()))),
                 _ => Err(EvalError::InvalidPrefixOperation {
                     operator: self.op.literal(),
                     operand: operand.inspect(),
@@ -61,7 +58,7 @@ impl Eval for Prefixed {
                 }),
             },
             TokenKind::Minus => match &*operand {
-                Object::INTEGER(i) => Ok(Some(Arc::new(Object::INTEGER(IntegerObject(-i.0))))),
+                Object::INTEGER(i) => Ok(Some(Arc::new(i.negated_object()))),
                 _ => Err(EvalError::InvalidPrefixOperation {
                     operator: self.op.literal(),
                     operand: operand.inspect(),

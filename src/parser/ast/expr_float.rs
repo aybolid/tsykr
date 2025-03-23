@@ -45,7 +45,7 @@ impl Node for Float {
 impl Eval for Float {
     fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         match self.token.kind {
-            TokenKind::Float(value) => Ok(Some(Arc::new(Object::FLOAT(FloatObject::new(value))))),
+            TokenKind::Float(value) => Ok(Some(Arc::new(FloatObject::new_object(value)))),
             _ => unreachable!(),
         }
     }
@@ -77,7 +77,7 @@ mod tests {
         let float = Float::new(token.clone());
 
         let result = float.eval(&mut env).unwrap().unwrap();
-        assert_eq!(result, Arc::new(Object::FLOAT(FloatObject::new(2.23))));
+        assert_eq!(*result, FloatObject::new_object(2.23));
         assert_eq!(result.inspect(), "2.23");
     }
 }

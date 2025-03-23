@@ -45,9 +45,7 @@ impl Node for Integer {
 impl Eval for Integer {
     fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
         match self.token.kind {
-            TokenKind::Integer(value) => {
-                Ok(Some(Arc::new(Object::INTEGER(IntegerObject::new(value)))))
-            }
+            TokenKind::Integer(value) => Ok(Some(Arc::new(IntegerObject::new_object(value)))),
             _ => unreachable!(),
         }
     }
@@ -80,7 +78,7 @@ mod tests {
 
         let result = integer.eval(&mut env);
         let obj = result.unwrap().unwrap();
-        assert_eq!(obj, Arc::new(Object::INTEGER(IntegerObject::new(42))));
+        assert_eq!(obj, Arc::new(IntegerObject::new_object(42)));
         assert_eq!(obj.inspect(), "42");
     }
 }
