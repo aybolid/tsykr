@@ -3,22 +3,25 @@ use crate::{
     eval::{Eval, EvalError, ExecEnvironment},
     parser::{Block, Identifier},
 };
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::{Rc, Weak},
+};
 
 #[derive(Debug)]
 pub struct FunctionObject {
-    pub env: Rc<RefCell<ExecEnvironment>>,
+    pub env: Weak<RefCell<ExecEnvironment>>,
     pub params: Vec<Identifier>,
     pub body: Block,
 }
 
 impl FunctionObject {
-    pub fn new(env: Rc<RefCell<ExecEnvironment>>, params: Vec<Identifier>, body: Block) -> Self {
+    pub fn new(env: Weak<RefCell<ExecEnvironment>>, params: Vec<Identifier>, body: Block) -> Self {
         Self { env, params, body }
     }
 
     pub fn new_object(
-        env: Rc<RefCell<ExecEnvironment>>,
+        env: Weak<RefCell<ExecEnvironment>>,
         params: Vec<Identifier>,
         body: Block,
     ) -> Object {
@@ -26,7 +29,8 @@ impl FunctionObject {
     }
 
     pub fn call(&self, args: Vec<Rc<Object>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let mut function_env = ExecEnvironment::new_enclosed(Rc::clone(&self.env));
+        let self_env = self.env.upgrade().unwrap();
+        let mut function_env = ExecEnvironment::new_enclosed(Rc::clone(&self_env));
 
         for (param, arg) in self.params.iter().zip(args.iter()) {
             function_env.set(param.to_string(), Rc::clone(arg));
@@ -38,7 +42,9 @@ impl FunctionObject {
 
 impl PartialEq for FunctionObject {
     fn eq(&self, other: &Self) -> bool {
-        self.params == other.params && self.body == other.body && Rc::ptr_eq(&self.env, &other.env)
+        let self_env = self.env.upgrade().unwrap();
+        let other_env = other.env.upgrade().unwrap();
+        self.params == other.params && self.body == other.body && Rc::ptr_eq(&self_env, &other_env)
     }
 }
 

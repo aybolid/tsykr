@@ -65,8 +65,11 @@ impl Node for FunctionDeclaration {
 
 impl Eval for FunctionDeclaration {
     fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let function_obj =
-            FunctionObject::new_object(Rc::clone(&env), self.parameters.clone(), self.body.clone());
+        let function_obj = FunctionObject::new_object(
+            Rc::downgrade(&env),
+            self.parameters.clone(),
+            self.body.clone(),
+        );
 
         env.borrow_mut()
             .set(self.identifier.to_string(), Rc::new(function_obj));

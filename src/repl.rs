@@ -13,17 +13,38 @@ pub fn run() {
     println!("Starting tsykr REPL...");
 
     loop {
+        let mut print_debug = false;
+
         print!("{PROMPT}");
         stdout.flush().unwrap();
         let mut buf = String::new();
+
         stdin.read_line(&mut buf).unwrap();
+
+        if buf == "env\n" {
+            println!("{env:#?}");
+            continue;
+        }
+
+        if buf.starts_with("?") {
+            print_debug = true;
+            buf = buf.strip_prefix("?").unwrap().to_string();
+        }
 
         let lexer = Lexer::new(buf);
         let mut parser = Parser::new(lexer);
 
         match parser.parse() {
             Ok(program) => {
-                program.eval_program(Rc::clone(&env));
+                let result = program.eval_program(Rc::clone(&env));
+                if print_debug {
+                    println!("{:?}", result);
+                } else {
+                    match result {
+                        Some(value) => println!("{}", value.inspect()),
+                        None => println!(),
+                    }
+                }
             }
             Err(errs) => {
                 eprintln!("Parser errors:");
