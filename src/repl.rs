@@ -21,8 +21,8 @@ pub fn run() {
 
         stdin.read_line(&mut buf).unwrap();
 
-        if buf == "env\n" {
-            println!("{env:#?}");
+        if buf == "?env\n" {
+            println!("{:#?}", env.borrow().store);
             continue;
         }
 
@@ -38,11 +38,10 @@ pub fn run() {
             Ok(program) => {
                 let result = program.eval_program(Rc::clone(&env));
                 if print_debug {
-                    println!("{:?}", result);
+                    println!("{:#?}", result);
                 } else {
-                    match result {
-                        Some(value) => println!("{}", value.inspect()),
-                        None => println!(),
+                    if let Some(value) = result {
+                        println!("{}", value.inspect());
                     }
                 }
             }
