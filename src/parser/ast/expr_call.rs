@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
@@ -53,16 +53,19 @@ impl Node for FunctionCall {
 }
 
 impl Eval for FunctionCall {
-    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         let mut args = Vec::new();
         for arg in &self.arguments {
-            args.push((arg.eval(_env)?).expect("has value"));
+            args.push((arg.eval(Rc::clone(&env))?).expect("has value"));
         }
-        let function = (self.function.eval(_env)?).expect("has value");
+        let function = (self.function.eval(env)?).expect("has value");
 
         match &*function {
             Object::FUNCTION(func) => func.call(args),
-            _ => todo!("not a function"),
+            _ => Err(EvalError::NotAFunction(
+                function.inspect(),
+                self.token.position,
+            )),
         }
     }
 }

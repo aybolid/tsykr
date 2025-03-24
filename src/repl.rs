@@ -1,4 +1,4 @@
-use std::io::Write;
+use std::{cell::RefCell, io::Write, rc::Rc};
 
 use crate::{eval::ExecEnvironment, lexer::Lexer, parser::Parser};
 
@@ -8,7 +8,7 @@ const PROMPT: &str = ">> ";
 pub fn run() {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
-    let mut env = ExecEnvironment::new();
+    let env = Rc::new(RefCell::new(ExecEnvironment::new()));
 
     println!("Starting tsykr REPL...");
 
@@ -23,7 +23,7 @@ pub fn run() {
 
         match parser.parse() {
             Ok(program) => {
-                program.eval_program(&mut env);
+                program.eval_program(Rc::clone(&env));
             }
             Err(errs) => {
                 eprintln!("Parser errors:");

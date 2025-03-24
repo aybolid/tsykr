@@ -1,4 +1,4 @@
-use std::{rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc};
 
 use super::{Block, Identifier, Node};
 use crate::{
@@ -64,14 +64,12 @@ impl Node for FunctionDeclaration {
 }
 
 impl Eval for FunctionDeclaration {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
-        let function_obj = FunctionObject::new_object(
-            Rc::new(env.clone()),
-            self.parameters.clone(),
-            self.body.clone(),
-        );
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
+        let function_obj =
+            FunctionObject::new_object(Rc::clone(&env), self.parameters.clone(), self.body.clone());
 
-        env.set(self.identifier.to_string(), Arc::new(function_obj));
+        env.borrow_mut()
+            .set(self.identifier.to_string(), Rc::new(function_obj));
 
         Ok(None)
     }

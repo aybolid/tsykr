@@ -1,50 +1,39 @@
 use super::Object;
-use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::Arc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-#[derive(Debug, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct ExecEnvironment {
-    store: Rc<RefCell<HashMap<String, Arc<Object>>>>,
-    outer: Option<Rc<ExecEnvironment>>, // Reference to outer/parent environment
+    store: HashMap<String, Rc<Object>>,
+    outer: Option<Rc<RefCell<ExecEnvironment>>>,
 }
 
 impl ExecEnvironment {
     pub fn new() -> Self {
         Self {
-            store: Rc::new(RefCell::new(HashMap::new())),
+            store: HashMap::new(),
             outer: None,
         }
     }
 
-    // Create a new environment with access to outer environment
-    pub fn new_enclosed(outer: Rc<ExecEnvironment>) -> Self {
-        Self {
-            store: Rc::new(RefCell::new(HashMap::new())),
-            outer: Some(outer),
-        }
+    pub fn new_enclosed(outer: Rc<RefCell<ExecEnvironment>>) -> Self {
+        let mut env = Self::new();
+        env.outer = Some(outer);
+        env
     }
 
-    pub fn get(&self, key: &str) -> Option<Arc<Object>> {
-        // First check in current environment
-        if let Some(obj) = self.store.borrow().get(key) {
-            return Some(Arc::clone(obj));
+    pub fn get(&self, key: &str) -> Option<Rc<Object>> {
+        if let Some(obj) = self.store.get(key) {
+            return Some(Rc::clone(obj));
         }
 
-        // If not found and we have an outer environment, check there
         if let Some(outer) = &self.outer {
-            return outer.get(key);
+            return outer.borrow().get(key);
         }
 
         None
     }
 
-    pub fn set(&self, key: String, value: Arc<Object>) {
-        self.store.borrow_mut().insert(key, value);
-    }
-}
-
-impl PartialEq for ExecEnvironment {
-    fn eq(&self, other: &Self) -> bool {
-        // For environments, we can consider them equal if they point to the same store
-        Rc::ptr_eq(&self.store, &other.store)
+    pub fn set(&mut self, key: String, value: Rc<Object>) {
+        self.store.insert(key, value);
     }
 }

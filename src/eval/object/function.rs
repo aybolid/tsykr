@@ -3,44 +3,42 @@ use crate::{
     eval::{Eval, EvalError, ExecEnvironment},
     parser::{Block, Identifier},
 };
-use std::{rc::Rc, sync::Arc};
+use std::{cell::RefCell, rc::Rc};
 
 #[derive(Debug)]
 pub struct FunctionObject {
-    pub env: Rc<ExecEnvironment>,
+    pub env: Rc<RefCell<ExecEnvironment>>,
     pub params: Vec<Identifier>,
     pub body: Block,
 }
 
 impl FunctionObject {
-    pub fn new(env: Rc<ExecEnvironment>, params: Vec<Identifier>, body: Block) -> Self {
+    pub fn new(env: Rc<RefCell<ExecEnvironment>>, params: Vec<Identifier>, body: Block) -> Self {
         Self { env, params, body }
     }
 
-    pub fn new_object(env: Rc<ExecEnvironment>, params: Vec<Identifier>, body: Block) -> Object {
+    pub fn new_object(
+        env: Rc<RefCell<ExecEnvironment>>,
+        params: Vec<Identifier>,
+        body: Block,
+    ) -> Object {
         Object::FUNCTION(Self::new(env, params, body))
     }
 
-    pub fn call(&self, args: Vec<Arc<Object>>) -> Result<Option<Arc<Object>>, EvalError> {
-        let mut function_env = ExecEnvironment::new_enclosed(self.env.clone());
+    pub fn call(&self, args: Vec<Rc<Object>>) -> Result<Option<Rc<Object>>, EvalError> {
+        let mut function_env = ExecEnvironment::new_enclosed(Rc::clone(&self.env));
 
         for (param, arg) in self.params.iter().zip(args.iter()) {
-            function_env.set(param.to_string(), Arc::clone(arg));
+            function_env.set(param.to_string(), Rc::clone(arg));
         }
 
-        self.body.eval(&mut function_env)
+        self.body.eval(Rc::new(RefCell::new(function_env)))
     }
 }
 
 impl PartialEq for FunctionObject {
     fn eq(&self, other: &Self) -> bool {
-        // Compare parameters and body
-        self.params == other.params &&
-        self.body == other.body &&
-        // For environments, we can either check if they're the same reference
-        Rc::ptr_eq(&self.env, &other.env)
-        // Or if you need deeper equality, implement a custom comparison
-        // *self.env == *other.env
+        self.params == other.params && self.body == other.body && Rc::ptr_eq(&self.env, &other.env)
     }
 }
 

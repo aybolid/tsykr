@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::eval::ExecEnvironment;
 
 use super::{Node, Statement};
@@ -16,9 +18,9 @@ impl Program {
         self.statements.push(statement);
     }
 
-    pub fn eval_program(&self, env: &mut ExecEnvironment) {
+    pub fn eval_program(&self, env: Rc<RefCell<ExecEnvironment>>) {
         for statement in &self.statements {
-            match statement.eval(env) {
+            match statement.eval(Rc::clone(&env)) {
                 Ok(result) => match result {
                     Some(v) => println!("{}", v.inspect()),
                     None => {}

@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
@@ -38,7 +38,7 @@ impl Node for ExpressionStatement {
 }
 
 impl Eval for ExpressionStatement {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         self.expression.eval(env)
     }
 }

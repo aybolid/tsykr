@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use super::{Block, Identifier, Node};
 use crate::{
@@ -56,7 +56,7 @@ impl Node for FunctionExpression {
 }
 
 impl Eval for FunctionExpression {
-    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, _env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         todo!()
     }
 }

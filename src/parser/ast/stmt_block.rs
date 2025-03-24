@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use super::{Node, Statement};
 use crate::{
@@ -47,10 +47,10 @@ impl Node for Block {
 }
 
 impl Eval for Block {
-    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         let mut result = None;
         for statement in &self.statements {
-            let evaluated = statement.eval(_env)?;
+            let evaluated = statement.eval(Rc::clone(&env))?;
             if let Some(obj) = evaluated {
                 result = Some(obj);
             }

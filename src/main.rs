@@ -1,3 +1,5 @@
+use std::{cell::RefCell, rc::Rc};
+
 use anyhow::Result;
 use clap::Parser;
 use eval::ExecEnvironment;
@@ -23,11 +25,11 @@ fn main() -> Result<()> {
             let lexer = Lexer::new(content);
             let mut parser = parser::Parser::new(lexer);
 
-            let mut env = ExecEnvironment::new();
+            let env = Rc::new(RefCell::new(ExecEnvironment::new()));
 
             match parser.parse() {
                 Ok(program) => {
-                    program.eval_program(&mut env);
+                    program.eval_program(env);
                 }
                 Err(errs) => {
                     eprintln!("Parser errors:");

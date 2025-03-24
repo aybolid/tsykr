@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
@@ -43,7 +43,7 @@ impl Node for ReturnStatement {
 }
 
 impl Eval for ReturnStatement {
-    fn eval(&self, _env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, _env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         todo!()
     }
 }

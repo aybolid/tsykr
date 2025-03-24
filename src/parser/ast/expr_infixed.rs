@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{BooleanObject, Eval, EvalError, ExecEnvironment, FloatObject, IntegerObject, Object},
@@ -22,34 +22,28 @@ impl Infixed {
         Self { op, left, right }
     }
 
-    fn eval_integer_integer(
-        &self,
-        left: i64,
-        right: i64,
-    ) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval_integer_integer(&self, left: i64, right: i64) -> Result<Option<Rc<Object>>, EvalError> {
         match self.op.kind {
-            TokenKind::Plus => Ok(Some(Arc::new(IntegerObject::new_object(left + right)))),
-            TokenKind::Minus => Ok(Some(Arc::new(IntegerObject::new_object(left - right)))),
-            TokenKind::Asterisk => Ok(Some(Arc::new(IntegerObject::new_object(left * right)))),
-            TokenKind::Slash => Ok(Some(Arc::new(IntegerObject::new_object(left / right)))),
+            TokenKind::Plus => Ok(Some(Rc::new(IntegerObject::new_object(left + right)))),
+            TokenKind::Minus => Ok(Some(Rc::new(IntegerObject::new_object(left - right)))),
+            TokenKind::Asterisk => Ok(Some(Rc::new(IntegerObject::new_object(left * right)))),
+            TokenKind::Slash => Ok(Some(Rc::new(IntegerObject::new_object(left / right)))),
 
             // Comparison operations
-            TokenKind::EqualsEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::EqualsEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left == right,
             )))),
-            TokenKind::BangEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::BangEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left != right,
             )))),
-            TokenKind::LessThan => Ok(Some(Arc::new(BooleanObject::object_from_bool(
-                left < right,
-            )))),
-            TokenKind::GreaterThan => Ok(Some(Arc::new(BooleanObject::object_from_bool(
-                left > right,
-            )))),
-            TokenKind::LessThanEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::LessThan => Ok(Some(Rc::new(BooleanObject::object_from_bool(left < right)))),
+            TokenKind::GreaterThan => {
+                Ok(Some(Rc::new(BooleanObject::object_from_bool(left > right))))
+            }
+            TokenKind::LessThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left <= right,
             )))),
-            TokenKind::GreaterThanEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::GreaterThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left >= right,
             )))),
 
@@ -57,30 +51,28 @@ impl Infixed {
         }
     }
 
-    fn eval_float_float(&self, left: f64, right: f64) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval_float_float(&self, left: f64, right: f64) -> Result<Option<Rc<Object>>, EvalError> {
         match self.op.kind {
-            TokenKind::Plus => Ok(Some(Arc::new(FloatObject::new_object(left + right)))),
-            TokenKind::Minus => Ok(Some(Arc::new(FloatObject::new_object(left - right)))),
-            TokenKind::Asterisk => Ok(Some(Arc::new(FloatObject::new_object(left * right)))),
-            TokenKind::Slash => Ok(Some(Arc::new(FloatObject::new_object(left / right)))),
+            TokenKind::Plus => Ok(Some(Rc::new(FloatObject::new_object(left + right)))),
+            TokenKind::Minus => Ok(Some(Rc::new(FloatObject::new_object(left - right)))),
+            TokenKind::Asterisk => Ok(Some(Rc::new(FloatObject::new_object(left * right)))),
+            TokenKind::Slash => Ok(Some(Rc::new(FloatObject::new_object(left / right)))),
 
             // Comparison operations
-            TokenKind::EqualsEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::EqualsEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left == right,
             )))),
-            TokenKind::BangEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::BangEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left != right,
             )))),
-            TokenKind::LessThan => Ok(Some(Arc::new(BooleanObject::object_from_bool(
-                left < right,
-            )))),
-            TokenKind::GreaterThan => Ok(Some(Arc::new(BooleanObject::object_from_bool(
-                left > right,
-            )))),
-            TokenKind::LessThanEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::LessThan => Ok(Some(Rc::new(BooleanObject::object_from_bool(left < right)))),
+            TokenKind::GreaterThan => {
+                Ok(Some(Rc::new(BooleanObject::object_from_bool(left > right))))
+            }
+            TokenKind::LessThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left <= right,
             )))),
-            TokenKind::GreaterThanEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::GreaterThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left >= right,
             )))),
 
@@ -92,12 +84,12 @@ impl Infixed {
         &self,
         left: bool,
         right: bool,
-    ) -> Result<Option<Arc<Object>>, EvalError> {
+    ) -> Result<Option<Rc<Object>>, EvalError> {
         match self.op.kind {
-            TokenKind::EqualsEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::EqualsEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left == right,
             )))),
-            TokenKind::BangEquals => Ok(Some(Arc::new(BooleanObject::object_from_bool(
+            TokenKind::BangEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
                 left != right,
             )))),
 
@@ -105,7 +97,7 @@ impl Infixed {
         }
     }
 
-    fn invalid_operation(&self) -> Result<Option<Arc<Object>>, EvalError> {
+    fn invalid_operation(&self) -> Result<Option<Rc<Object>>, EvalError> {
         Err(EvalError::InvalidInfixOperation {
             operator: self.op.literal(),
             left: self.left.to_string(),
@@ -137,8 +129,9 @@ impl Node for Infixed {
 }
 
 impl Eval for Infixed {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
-        let left_operand = (self.left.eval(env)?).expect("expression eval always returns Some");
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
+        let left_operand =
+            (self.left.eval(Rc::clone(&env))?).expect("expression eval always returns Some");
         let right_operand = (self.right.eval(env)?).expect("expression eval always returns Some");
 
         match (&*left_operand, &*right_operand) {

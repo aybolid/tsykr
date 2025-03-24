@@ -13,7 +13,7 @@ mod stmt_function;
 mod stmt_let;
 mod stmt_return;
 
-use std::{fmt::Debug, sync::Arc};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
 pub use expr_boolean::*;
 pub use expr_call::*;
@@ -54,7 +54,7 @@ pub enum Statement {
 }
 
 impl Statement {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         match self {
             Statement::BLOCK(block) => block.eval(env),
             Statement::EXPR(expr_stmt) => expr_stmt.eval(env),
@@ -90,7 +90,7 @@ pub enum Expression {
 }
 
 impl Expression {
-    pub fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    pub fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         match self {
             Expression::BOOLEAN(boolean) => boolean.eval(env),
             Expression::CALL(call) => call.eval(env),

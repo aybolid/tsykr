@@ -1,7 +1,7 @@
 mod env;
 mod object;
 
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 pub use env::*;
 pub use object::*;
@@ -27,8 +27,10 @@ pub enum EvalError {
         right: String,
         position: Position,
     },
+    #[error("Not a function: {0} - {1}")]
+    NotAFunction(String, Position),
 }
 
 pub trait Eval {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError>;
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError>;
 }

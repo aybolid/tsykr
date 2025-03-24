@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
@@ -46,11 +46,11 @@ impl Node for Prefixed {
 }
 
 impl Eval for Prefixed {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
         let operand = (self.right.eval(env)?).expect("all expressions return smth");
         match self.op.kind {
             TokenKind::Bang => match &*operand {
-                Object::BOOLEAN(b) => Ok(Some(Arc::new(b.negated_object()))),
+                Object::BOOLEAN(b) => Ok(Some(Rc::new(b.negated_object()))),
                 _ => Err(EvalError::InvalidPrefixOperation {
                     operator: self.op.literal(),
                     operand: operand.inspect(),
@@ -58,8 +58,8 @@ impl Eval for Prefixed {
                 }),
             },
             TokenKind::Minus => match &*operand {
-                Object::INTEGER(i) => Ok(Some(Arc::new(i.negated_object()))),
-                Object::FLOAT(f) => Ok(Some(Arc::new(f.negated_object()))),
+                Object::INTEGER(i) => Ok(Some(Rc::new(i.negated_object()))),
+                Object::FLOAT(f) => Ok(Some(Rc::new(f.negated_object()))),
                 _ => Err(EvalError::InvalidPrefixOperation {
                     operator: self.op.literal(),
                     operand: operand.inspect(),

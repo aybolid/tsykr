@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
@@ -52,9 +52,9 @@ impl Node for LetStatement {
 }
 
 impl Eval for LetStatement {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
-        let value = (self.value.eval(env)?).expect("dont think its possible");
-        env.set(self.identifier.to_string(), value);
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
+        let value = (self.value.eval(Rc::clone(&env))?).expect("dont think its possible");
+        env.borrow_mut().set(self.identifier.to_string(), value);
         Ok(None)
     }
 }

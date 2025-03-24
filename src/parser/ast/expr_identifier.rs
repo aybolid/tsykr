@@ -1,4 +1,4 @@
-use std::sync::Arc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment, Object},
@@ -43,8 +43,8 @@ impl Node for Identifier {
 }
 
 impl Eval for Identifier {
-    fn eval(&self, env: &mut ExecEnvironment) -> Result<Option<Arc<Object>>, EvalError> {
-        match env.get(&self.token.literal()) {
+    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
+        match env.borrow().get(&self.token.literal()) {
             Some(obj) => Ok(Some(obj)),
             None => Err(EvalError::UnknownIdentifier(
                 self.token.literal(),
