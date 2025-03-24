@@ -2,10 +2,12 @@ use super::{Object, ObjectImpl};
 use crate::{
     eval::{Eval, EvalError, ExecEnvironment},
     parser::{Block, Identifier},
+    DEBUG_DROP,
 };
 use std::{
     cell::RefCell,
     rc::{Rc, Weak},
+    sync::atomic::Ordering,
 };
 
 #[derive(Debug)]
@@ -61,5 +63,13 @@ impl ObjectImpl for FunctionObject {
         );
         out.push(')');
         out
+    }
+}
+
+impl Drop for FunctionObject {
+    fn drop(&mut self) {
+        if DEBUG_DROP.load(Ordering::SeqCst) {
+            println!("{} dropped!", self.inspect());
+        }
     }
 }

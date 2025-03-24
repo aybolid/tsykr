@@ -1,4 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{
+    cell::RefCell,
+    rc::Rc,
+    sync::atomic::{AtomicBool, Ordering},
+};
 
 use anyhow::Result;
 use clap::Parser;
@@ -10,13 +14,19 @@ mod lexer;
 mod parser;
 mod repl;
 
+static DEBUG_DROP: AtomicBool = AtomicBool::new(false);
+
 #[derive(Debug, Parser)]
 struct Args {
     path: Option<String>,
+    #[arg(long, default_value_t = false)]
+    debug_drop: bool,
 }
 
 fn main() -> Result<()> {
     let args = Args::parse();
+
+    DEBUG_DROP.store(args.debug_drop, Ordering::SeqCst);
 
     match args.path {
         Some(path) => {

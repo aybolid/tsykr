@@ -1,5 +1,7 @@
+use crate::DEBUG_DROP;
+
 use super::Object;
-use std::{cell::RefCell, collections::HashMap, rc::Rc};
+use std::{cell::RefCell, collections::HashMap, rc::Rc, sync::atomic::Ordering};
 
 #[derive(Debug, PartialEq)]
 pub struct ExecEnvironment {
@@ -35,5 +37,17 @@ impl ExecEnvironment {
 
     pub fn set(&mut self, key: String, value: Rc<Object>) {
         self.store.insert(key, value);
+    }
+}
+
+impl Drop for ExecEnvironment {
+    fn drop(&mut self) {
+        if DEBUG_DROP.load(Ordering::SeqCst) {
+            if let Some(_) = self.outer {
+                println!("ExecEnvironment (enclosed) dropped!")
+            } else {
+                println!("ExecEnvironment dropped!");
+            }
+        }
     }
 }

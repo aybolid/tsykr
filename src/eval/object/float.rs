@@ -1,3 +1,7 @@
+use std::sync::atomic::Ordering;
+
+use crate::DEBUG_DROP;
+
 use super::{Object, ObjectImpl};
 
 #[derive(Debug, PartialEq)]
@@ -20,5 +24,13 @@ impl FloatObject {
 impl ObjectImpl for FloatObject {
     fn inspect(&self) -> String {
         format!("{}", self.0)
+    }
+}
+
+impl Drop for FloatObject {
+    fn drop(&mut self) {
+        if DEBUG_DROP.load(Ordering::SeqCst) {
+            println!("{self:?} dropped!");
+        }
     }
 }

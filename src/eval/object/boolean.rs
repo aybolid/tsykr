@@ -1,3 +1,7 @@
+use std::sync::atomic::Ordering;
+
+use crate::DEBUG_DROP;
+
 use super::{Object, ObjectImpl};
 
 pub const TRUE: Object = Object::BOOLEAN(BooleanObject(true));
@@ -29,5 +33,13 @@ impl BooleanObject {
 impl ObjectImpl for BooleanObject {
     fn inspect(&self) -> String {
         format!("{}", self.0)
+    }
+}
+
+impl Drop for BooleanObject {
+    fn drop(&mut self) {
+        if DEBUG_DROP.load(Ordering::SeqCst) {
+            println!("{self:?} dropped!");
+        }
     }
 }
