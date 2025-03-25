@@ -1,5 +1,11 @@
 use std::rc::Rc;
 
+use crate::parser::Block;
+
+mod function;
+
+pub use function::*;
+
 pub const VOID: Value = Value::VOID;
 pub const TRUE: Value = Value::Boolean(true);
 pub const FALSE: Value = Value::Boolean(false);
@@ -9,6 +15,7 @@ pub enum Value {
     Integer(i64),
     Float(f64),
     Boolean(bool),
+    Function(Function),
 
     Returned(Rc<Value>),
 
@@ -24,6 +31,9 @@ impl Value {
     }
     pub fn new_returned(value: Rc<Value>) -> Rc<Self> {
         Rc::new(Value::Returned(value))
+    }
+    pub fn new_function(params: Vec<String>, body: Rc<Block>) -> Rc<Self> {
+        Rc::new(Value::Function(Function::new(params, body)))
     }
 
     pub fn from_native_bool(value: bool) -> Rc<Self> {
@@ -47,6 +57,9 @@ impl ToString for Value {
             Value::Float(value) => value.to_string(),
             Value::Boolean(value) => value.to_string(),
             Value::Returned(value) => value.to_string(),
+            Value::Function(func) => {
+                format!("fn({})", func.params.join(", "))
+            }
         }
     }
 }

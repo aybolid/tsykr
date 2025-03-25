@@ -78,7 +78,7 @@ impl Environment for LocalEnvironment {
     fn get(&self, name: &str) -> Option<Rc<Value>> {
         self.store
             .get(name)
-            .cloned()
+            .cloned() // clones inner rc value
             .or_else(|| self.parent.borrow().get(name))
     }
 

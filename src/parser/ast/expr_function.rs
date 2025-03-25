@@ -1,6 +1,8 @@
+use std::{cell::RefCell, rc::Rc};
+
 use super::{Block, Identifier, Node};
 use crate::{
-    eval::Eval,
+    eval::{Eval, EvalError, ExecutionEnvironment, Value},
     lexer::{Token, TokenKind},
 };
 
@@ -8,7 +10,7 @@ use crate::{
 pub struct FunctionExpression {
     pub token: Token,
     pub parameters: Vec<Identifier>,
-    pub body: Block,
+    pub body: Rc<Block>,
 }
 
 impl FunctionExpression {
@@ -17,7 +19,7 @@ impl FunctionExpression {
         FunctionExpression {
             token,
             parameters,
-            body,
+            body: Rc::new(body),
         }
     }
 }
@@ -54,11 +56,13 @@ impl Node for FunctionExpression {
 }
 
 impl Eval for FunctionExpression {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, _env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let params = self
+            .parameters
+            .iter()
+            .map(|ident| ident.to_string())
+            .collect::<Vec<String>>();
+        Ok(Value::new_function(params, Rc::clone(&self.body)))
     }
 }
 
@@ -122,5 +126,23 @@ mod tests {
             function.to_string(),
             "fn (_a, _b) {\n  let x = 5\n  return x\n}"
         )
+    }
+
+    #[test]
+    fn test_fn_expr_eval() {
+        let block = Block::new(Token::new(TokenKind::LeftCurly, Position(0, 0)), vec![]);
+        let params = vec![];
+        let function = FunctionExpression::new(
+            Token::new(TokenKind::Function, Position(0, 0)),
+            params,
+            block,
+        );
+
+        let env = ExecutionEnvironment::new_global();
+        let result = function.eval(env);
+
+        assert!(result.is_ok());
+        let matched = matches!(&*result.unwrap(), Value::Function(_));
+        assert_eq!(matched, true);
     }
 }
