@@ -1,5 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
-    eval::Eval,
+    eval::{Eval, EvalError, ExecutionEnvironment, Value, FALSE, TRUE},
     lexer::{Token, TokenKind},
 };
 
@@ -38,11 +40,12 @@ impl Node for Boolean {
 }
 
 impl Eval for Boolean {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, _env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        match self.token.kind {
+            TokenKind::True => Ok(TRUE.rc()),
+            TokenKind::False => Ok(FALSE.rc()),
+            _ => unreachable!(),
+        }
     }
 }
 
@@ -61,5 +64,17 @@ mod tests {
         assert_eq!(boolean.token, token);
         assert_eq!(boolean.to_string(), token.literal());
         assert_eq!(boolean.token_literal(), token.literal());
+    }
+
+    #[test]
+    fn test_bool_eval() {
+        let token = Token::new(TokenKind::True, Position(0, 0));
+        let boolean = Boolean::new(token);
+
+        let env = ExecutionEnvironment::new_global();
+        let result = boolean.eval(env);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), TRUE.rc());
     }
 }
