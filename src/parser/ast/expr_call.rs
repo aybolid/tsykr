@@ -53,10 +53,7 @@ impl Node for FunctionCall {
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        lexer::Position,
-        parser::{Identifier, Integer},
-    };
+    use crate::lexer::Position;
 
     use super::*;
 
@@ -64,14 +61,14 @@ mod tests {
     fn test_function_call() {
         let call = FunctionCall::new(
             Token::new(TokenKind::LeftParen, Position(0, 0)),
-            Box::new(Expression::IdentExpr(Identifier::new(Token::new(
+            Box::new(Expression::new_ident(Token::new(
                 TokenKind::Identifier("my_func".to_string()),
                 Position(0, 0),
-            )))),
-            vec![Box::new(Expression::IntExpr(Integer::new(Token::new(
+            ))),
+            vec![Box::new(Expression::new_int(Token::new(
                 TokenKind::Integer(42),
                 Position(0, 0),
-            ))))],
+            )))],
         );
 
         assert!(call.as_any().is::<FunctionCall>());

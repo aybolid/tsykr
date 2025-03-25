@@ -38,46 +38,46 @@ impl Node for Block {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         lexer::Position,
-//         parser::{Identifier, Integer, LetStatement, ReturnStatement},
-//     };
+#[cfg(test)]
+mod tests {
+    use crate::{
+        lexer::Position,
+        parser::{Expression, Identifier},
+    };
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_block_statement() {
-//         let block = Block::new(
-//             Token::new(TokenKind::LeftCurly, Position(0, 0)),
-//             vec![
-//                 Box::new(LetStatement::new(
-//                     Token::new(TokenKind::Let, Position(0, 0)),
-//                     Identifier::new(Token::new(
-//                         TokenKind::Identifier("x".to_string()),
-//                         Position(0, 0),
-//                     )),
-//                     Box::new(Integer::new(Token::new(
-//                         TokenKind::Integer(5),
-//                         Position(0, 0),
-//                     ))),
-//                 )),
-//                 Box::new(ReturnStatement::new(
-//                     Token::new(TokenKind::Return, Position(0, 0)),
-//                     Box::new(Identifier::new(Token::new(
-//                         TokenKind::Identifier("x".to_string()),
-//                         Position(0, 0),
-//                     ))),
-//                 )),
-//             ],
-//         );
+    #[test]
+    fn test_block_statement() {
+        let block = Block::new(
+            Token::new(TokenKind::LeftCurly, Position(0, 0)),
+            vec![
+                Box::new(Statement::new_let(
+                    Token::new(TokenKind::Let, Position(0, 0)),
+                    Identifier::new(Token::new(
+                        TokenKind::Identifier("x".to_string()),
+                        Position(0, 0),
+                    )),
+                    Box::new(Expression::new_int(Token::new(
+                        TokenKind::Integer(5),
+                        Position(0, 0),
+                    ))),
+                )),
+                Box::new(Statement::new_return(
+                    Token::new(TokenKind::Return, Position(0, 0)),
+                    Box::new(Expression::new_ident(Token::new(
+                        TokenKind::Identifier("x".to_string()),
+                        Position(0, 0),
+                    ))),
+                )),
+            ],
+        );
 
-//         assert!(block.as_any().is::<Block>());
-//         assert_eq!(
-//             block.token_literal(),
-//             Token::new(TokenKind::LeftCurly, Position(0, 0)).literal()
-//         );
-//         assert_eq!(block.to_string(), "{\n  let x = 5\n  return x\n}");
-//     }
-// }
+        assert!(block.as_any().is::<Block>());
+        assert_eq!(
+            block.token_literal(),
+            Token::new(TokenKind::LeftCurly, Position(0, 0)).literal()
+        );
+        assert_eq!(block.to_string(), "{\n  let x = 5\n  return x\n}");
+    }
+}

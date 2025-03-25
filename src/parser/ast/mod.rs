@@ -30,6 +30,8 @@ pub use stmt_function::*;
 pub use stmt_let::*;
 pub use stmt_return::*;
 
+use crate::lexer::Token;
+
 pub trait Node
 where
     Self: ToString,
@@ -48,6 +50,24 @@ pub enum Statement {
     Let(LetStatement),
     Return(ReturnStatement),
     Fn(FunctionDeclaration),
+}
+
+impl Statement {
+    pub fn new_block(token: Token, statements: Vec<Box<Statement>>) -> Self {
+        Statement::BlockStatement(Block::new(token, statements))
+    }
+    pub fn new_expr(token: Token, expr: Box<Expression>) -> Self {
+        Statement::Expr(ExpressionStatement::new(token, expr))
+    }
+    pub fn new_let(token: Token, name: Identifier, value: Box<Expression>) -> Self {
+        Statement::Let(LetStatement::new(token, name, value))
+    }
+    pub fn new_return(token: Token, value: Box<Expression>) -> Self {
+        Statement::Return(ReturnStatement::new(token, value))
+    }
+    pub fn new_fn(token: Token, name: Identifier, params: Vec<Identifier>, body: Block) -> Self {
+        Statement::Fn(FunctionDeclaration::new(token, name, params, body))
+    }
 }
 
 impl Node for Statement {
@@ -94,6 +114,33 @@ pub enum Expression {
     InfixedExpr(Infixed),
     IntExpr(Integer),
     PrefixedExpr(Prefixed),
+}
+
+impl Expression {
+    pub fn new_boolean(token: Token) -> Self {
+        Expression::BooleanExpr(Boolean::new(token))
+    }
+    pub fn new_call(token: Token, func: Box<Expression>, args: Vec<Box<Expression>>) -> Self {
+        Expression::CallExpr(FunctionCall::new(token, func, args))
+    }
+    pub fn new_float(token: Token) -> Self {
+        Expression::FloatExpr(Float::new(token))
+    }
+    pub fn new_int(token: Token) -> Self {
+        Expression::IntExpr(Integer::new(token))
+    }
+    pub fn new_fn(token: Token, params: Vec<Identifier>, body: Block) -> Self {
+        Expression::FnExpr(FunctionExpression::new(token, params, body))
+    }
+    pub fn new_ident(token: Token) -> Self {
+        Expression::IdentExpr(Identifier::new(token))
+    }
+    pub fn new_prefixed(op_token: Token, right: Box<Expression>) -> Self {
+        Expression::PrefixedExpr(Prefixed::new(op_token, right))
+    }
+    pub fn new_infixed(op_token: Token, left: Box<Expression>, right: Box<Expression>) -> Self {
+        Expression::InfixedExpr(Infixed::new(op_token, left, right))
+    }
 }
 
 impl Node for Expression {

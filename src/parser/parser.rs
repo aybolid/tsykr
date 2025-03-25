@@ -2,11 +2,7 @@ use thiserror::Error;
 
 use crate::lexer::{Lexer, Token, TokenKind};
 
-use super::{
-    precedence::Precedence, Block, Boolean, Expression, ExpressionStatement, Float, FunctionCall,
-    FunctionDeclaration, FunctionExpression, Identifier, Infixed, Integer, LetStatement, Prefixed,
-    Program, ReturnStatement, Statement,
-};
+use super::{precedence::Precedence, Expression, Identifier, Program, Statement};
 
 #[derive(Debug, PartialEq, Error)]
 pub enum ParserError {
@@ -119,9 +115,7 @@ impl Parser {
             Err(err) => return Err(err),
         };
 
-        Ok(Statement::Fn(FunctionDeclaration::new(
-            fn_token, identifier, params, body,
-        )))
+        Ok(Statement::new_fn(fn_token, identifier, params, body))
     }
 
     /// Parses a block statement.
@@ -145,10 +139,7 @@ impl Parser {
 
         self.expect_token_kind(&self.current_token, TokenKind::RightCurly)?;
 
-        Ok(Statement::BlockStatement(Block::new(
-            block_start_token,
-            statements,
-        )))
+        Ok(Statement::new_block(block_start_token, statements))
     }
 
     /// Parses a function parameters.
@@ -220,7 +211,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::Expr(ExpressionStatement::new(expr_token, expr)))
+        Ok(Statement::new_expr(expr_token, expr))
     }
 
     /// Parses an expression.
@@ -282,9 +273,7 @@ impl Parser {
         let call_token = self.current_token.take().expect("checked before");
         let arguments = self.parse_expression_list(TokenKind::RightParen)?;
 
-        Ok(Expression::CallExpr(FunctionCall::new(
-            call_token, callee, arguments,
-        )))
+        Ok(Expression::new_call(call_token, callee, arguments))
     }
 
     /// Parses a list of expressions separated by commas.
@@ -342,9 +331,7 @@ impl Parser {
             Err(err) => return Err(err),
         };
 
-        Ok(Expression::FnExpr(FunctionExpression::new(
-            fn_token, params, body,
-        )))
+        Ok(Expression::new_fn(fn_token, params, body))
     }
 
     /// Parses a grouped expression (wrapped in parentheses).
@@ -365,7 +352,7 @@ impl Parser {
         let op_token = self.current_token.take().expect("checked before");
         self.next_token();
         let right = self.parse_expression(Precedence::from_token(op_token.clone()))?;
-        Ok(Expression::InfixedExpr(Infixed::new(op_token, left, right)))
+        Ok(Expression::new_infixed(op_token, left, right))
     }
 
     /// Parses a prefixed expression.
@@ -375,10 +362,10 @@ impl Parser {
         })?;
         let op_token = self.current_token.take().expect("checked before");
         self.next_token();
-        Ok(Expression::PrefixedExpr(Prefixed::new(
+        Ok(Expression::new_prefixed(
             op_token,
             self.parse_expression(Precedence::Prefix)?,
-        )))
+        ))
     }
 
     /// Parses a boolean literal.
@@ -388,9 +375,9 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::True | TokenKind::False)
         })?;
-        Ok(Expression::BooleanExpr(Boolean::new(
+        Ok(Expression::new_boolean(
             self.current_token.take().expect("checked before"),
-        )))
+        ))
     }
 
     /// Parses a float literal.
@@ -400,9 +387,9 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Float(_))
         })?;
-        Ok(Expression::FloatExpr(Float::new(
+        Ok(Expression::new_float(
             self.current_token.take().expect("checked before"),
-        )))
+        ))
     }
 
     /// Parses an integer literal.
@@ -412,9 +399,9 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Integer(_))
         })?;
-        Ok(Expression::IntExpr(Integer::new(
+        Ok(Expression::new_int(
             self.current_token.take().expect("checked before"),
-        )))
+        ))
     }
 
     /// Parses an identifier.
@@ -424,9 +411,9 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Identifier(_))
         })?;
-        Ok(Expression::IdentExpr(Identifier::new(
+        Ok(Expression::new_ident(
             self.current_token.take().expect("checked before"),
-        )))
+        ))
     }
 
     /// Parses a return statement
@@ -446,7 +433,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::Return(ReturnStatement::new(return_token, value)))
+        Ok(Statement::new_return(return_token, value))
     }
 
     /// Parses a let statement
@@ -478,9 +465,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::Let(LetStatement::new(
-            let_token, identifier, value,
-        )))
+        Ok(Statement::new_let(let_token, identifier, value))
     }
 
     /// Populates the current token and the peek token.

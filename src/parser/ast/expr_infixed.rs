@@ -38,30 +38,27 @@ impl Node for Infixed {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         lexer::{Position, TokenKind},
-//         parser::Integer,
-//     };
+#[cfg(test)]
+mod tests {
+    use crate::lexer::{Position, TokenKind};
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_infixed_node() {
-//         let token = Token::new(TokenKind::Minus, Position(0, 0));
-//         let left = Box::new(Integer::new(Token::new(
-//             TokenKind::Integer(42),
-//             Position(0, 0),
-//         )));
-//         let right = Box::new(Integer::new(Token::new(
-//             TokenKind::Integer(42),
-//             Position(0, 0),
-//         )));
-//         let infixed = Infixed::new(token.clone(), left, right);
+    #[test]
+    fn test_infixed_node() {
+        let token = Token::new(TokenKind::Minus, Position(0, 0));
+        let left = Box::new(Expression::new_int(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
+        let right = Box::new(Expression::new_int(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        )));
+        let infixed = Infixed::new(token.clone(), left, right);
 
-//         assert_eq!(infixed.op, token);
-//         assert_eq!(infixed.to_string(), "(42-42)");
-//         assert_eq!(infixed.token_literal(), token.literal());
-//     }
-// }
+        assert_eq!(infixed.op, token);
+        assert_eq!(infixed.to_string(), "(42-42)");
+        assert_eq!(infixed.token_literal(), token.literal());
+    }
+}

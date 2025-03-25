@@ -35,19 +35,19 @@ impl Node for ReturnStatement {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::{lexer::Position, parser::Boolean};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Position;
 
-//     #[test]
-//     fn test_return_statement() {
-//         let token = Token::new(TokenKind::Return, Position(0, 0));
-//         let bool = Boolean::new(Token::new(TokenKind::True, Position(0, 0)));
+    #[test]
+    fn test_return_statement() {
+        let token = Token::new(TokenKind::Return, Position(0, 0));
+        let bool = Expression::new_boolean(Token::new(TokenKind::True, Position(0, 0)));
 
-//         let stmt = ReturnStatement::new(token.clone(), Box::new(bool));
+        let stmt = ReturnStatement::new(token.clone(), Box::new(bool));
 
-//         assert_eq!(stmt.token_literal(), token.literal());
-//         assert_eq!(stmt.to_string(), "return true");
-//     }
-// }
+        assert_eq!(stmt.token_literal(), token.literal());
+        assert_eq!(stmt.to_string(), "return true");
+    }
+}

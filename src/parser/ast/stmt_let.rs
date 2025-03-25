@@ -44,23 +44,23 @@ impl Node for LetStatement {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::{lexer::Position, parser::Integer};
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Position;
 
-//     #[test]
-//     fn test_let_statement() {
-//         let token = Token::new(TokenKind::Let, Position(0, 0));
-//         let ident = Identifier::new(Token::new(
-//             TokenKind::Identifier("who_cares".to_string()),
-//             Position(0, 0),
-//         ));
-//         let int = Integer::new(Token::new(TokenKind::Integer(69), Position(0, 0)));
+    #[test]
+    fn test_let_statement() {
+        let token = Token::new(TokenKind::Let, Position(0, 0));
+        let ident = Identifier::new(Token::new(
+            TokenKind::Identifier("who_cares".to_string()),
+            Position(0, 0),
+        ));
+        let int = Expression::new_int(Token::new(TokenKind::Integer(69), Position(0, 0)));
 
-//         let stmt = LetStatement::new(token.clone(), ident, Box::new(int));
+        let stmt = LetStatement::new(token.clone(), ident, Box::new(int));
 
-//         assert_eq!(stmt.token_literal(), token.literal());
-//         assert_eq!(stmt.to_string(), "let who_cares = 69");
-//     }
-// }
+        assert_eq!(stmt.token_literal(), token.literal());
+        assert_eq!(stmt.to_string(), "let who_cares = 69");
+    }
+}

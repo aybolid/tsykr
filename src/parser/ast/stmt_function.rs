@@ -58,69 +58,69 @@ impl Node for FunctionDeclaration {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         lexer::Position,
-//         parser::{Integer, LetStatement, ReturnStatement},
-//     };
+#[cfg(test)]
+mod tests {
+    use crate::{
+        lexer::Position,
+        parser::{Expression, Statement},
+    };
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_function_declaration_statement() {
-//         let block = Block::new(
-//             Token::new(TokenKind::LeftCurly, Position(0, 0)),
-//             vec![
-//                 Box::new(LetStatement::new(
-//                     Token::new(TokenKind::Let, Position(0, 0)),
-//                     Identifier::new(Token::new(
-//                         TokenKind::Identifier("x".to_string()),
-//                         Position(0, 0),
-//                     )),
-//                     Box::new(Integer::new(Token::new(
-//                         TokenKind::Integer(5),
-//                         Position(0, 0),
-//                     ))),
-//                 )),
-//                 Box::new(ReturnStatement::new(
-//                     Token::new(TokenKind::Return, Position(0, 0)),
-//                     Box::new(Identifier::new(Token::new(
-//                         TokenKind::Identifier("x".to_string()),
-//                         Position(0, 0),
-//                     ))),
-//                 )),
-//             ],
-//         );
-//         let params = vec![
-//             Identifier::new(Token::new(
-//                 TokenKind::Identifier("_a".to_string()),
-//                 Position(0, 0),
-//             )),
-//             Identifier::new(Token::new(
-//                 TokenKind::Identifier("_b".to_string()),
-//                 Position(0, 0),
-//             )),
-//         ];
-//         let function = FunctionDeclaration::new(
-//             Token::new(TokenKind::Function, Position(0, 0)),
-//             Identifier::new(Token::new(
-//                 TokenKind::Identifier("add".to_string()),
-//                 Position(0, 0),
-//             )),
-//             params,
-//             block,
-//         );
+    #[test]
+    fn test_function_declaration_statement() {
+        let block = Block::new(
+            Token::new(TokenKind::LeftCurly, Position(0, 0)),
+            vec![
+                Box::new(Statement::new_let(
+                    Token::new(TokenKind::Let, Position(0, 0)),
+                    Identifier::new(Token::new(
+                        TokenKind::Identifier("x".to_string()),
+                        Position(0, 0),
+                    )),
+                    Box::new(Expression::new_int(Token::new(
+                        TokenKind::Integer(5),
+                        Position(0, 0),
+                    ))),
+                )),
+                Box::new(Statement::new_return(
+                    Token::new(TokenKind::Return, Position(0, 0)),
+                    Box::new(Expression::new_ident(Token::new(
+                        TokenKind::Identifier("x".to_string()),
+                        Position(0, 0),
+                    ))),
+                )),
+            ],
+        );
+        let params = vec![
+            Identifier::new(Token::new(
+                TokenKind::Identifier("_a".to_string()),
+                Position(0, 0),
+            )),
+            Identifier::new(Token::new(
+                TokenKind::Identifier("_b".to_string()),
+                Position(0, 0),
+            )),
+        ];
+        let function = FunctionDeclaration::new(
+            Token::new(TokenKind::Function, Position(0, 0)),
+            Identifier::new(Token::new(
+                TokenKind::Identifier("add".to_string()),
+                Position(0, 0),
+            )),
+            params,
+            block,
+        );
 
-//         assert!(function.as_any().is::<FunctionDeclaration>());
-//         assert_eq!(
-//             function.token,
-//             Token::new(TokenKind::Function, Position(0, 0))
-//         );
-//         assert_eq!(function.token_literal(), function.token.literal());
-//         assert_eq!(
-//             function.to_string(),
-//             "fn add(_a, _b) {\n  let x = 5\n  return x\n}"
-//         )
-//     }
-// }
+        assert!(function.as_any().is::<FunctionDeclaration>());
+        assert_eq!(
+            function.token,
+            Token::new(TokenKind::Function, Position(0, 0))
+        );
+        assert_eq!(function.token_literal(), function.token.literal());
+        assert_eq!(
+            function.to_string(),
+            "fn add(_a, _b) {\n  let x = 5\n  return x\n}"
+        )
+    }
+}
