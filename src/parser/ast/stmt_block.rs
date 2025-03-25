@@ -1,13 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
-
 use super::{Node, Statement};
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 /// Block statement node.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Block {
     pub token: Token,
     pub statements: Vec<Box<Statement>>,
@@ -43,19 +38,6 @@ impl Node for Block {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for Block {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let mut result = None;
-        for statement in &self.statements {
-            let evaluated = statement.eval(Rc::clone(&env))?;
-            if let Some(obj) = evaluated {
-                result = Some(obj);
-            }
-        }
-        Ok(result)
     }
 }
 

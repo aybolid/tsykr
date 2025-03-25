@@ -1,14 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{BooleanObject, Eval, EvalError, ExecEnvironment, FloatObject, IntegerObject, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::Token;
 
 use super::{Expression, Node};
 
 /// Infixed ast node.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Infixed {
     pub left: Box<Expression>,
     /// Operator token
@@ -20,90 +15,6 @@ impl Infixed {
     /// Creates a new infixed node from a token.
     pub fn new(op: Token, left: Box<Expression>, right: Box<Expression>) -> Self {
         Self { op, left, right }
-    }
-
-    fn eval_integer_integer(&self, left: i64, right: i64) -> Result<Option<Rc<Object>>, EvalError> {
-        match self.op.kind {
-            TokenKind::Plus => Ok(Some(Rc::new(IntegerObject::new_object(left + right)))),
-            TokenKind::Minus => Ok(Some(Rc::new(IntegerObject::new_object(left - right)))),
-            TokenKind::Asterisk => Ok(Some(Rc::new(IntegerObject::new_object(left * right)))),
-            TokenKind::Slash => Ok(Some(Rc::new(IntegerObject::new_object(left / right)))),
-
-            // Comparison operations
-            TokenKind::EqualsEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left == right,
-            )))),
-            TokenKind::BangEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left != right,
-            )))),
-            TokenKind::LessThan => Ok(Some(Rc::new(BooleanObject::object_from_bool(left < right)))),
-            TokenKind::GreaterThan => {
-                Ok(Some(Rc::new(BooleanObject::object_from_bool(left > right))))
-            }
-            TokenKind::LessThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left <= right,
-            )))),
-            TokenKind::GreaterThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left >= right,
-            )))),
-
-            _ => self.invalid_operation(),
-        }
-    }
-
-    fn eval_float_float(&self, left: f64, right: f64) -> Result<Option<Rc<Object>>, EvalError> {
-        match self.op.kind {
-            TokenKind::Plus => Ok(Some(Rc::new(FloatObject::new_object(left + right)))),
-            TokenKind::Minus => Ok(Some(Rc::new(FloatObject::new_object(left - right)))),
-            TokenKind::Asterisk => Ok(Some(Rc::new(FloatObject::new_object(left * right)))),
-            TokenKind::Slash => Ok(Some(Rc::new(FloatObject::new_object(left / right)))),
-
-            // Comparison operations
-            TokenKind::EqualsEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left == right,
-            )))),
-            TokenKind::BangEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left != right,
-            )))),
-            TokenKind::LessThan => Ok(Some(Rc::new(BooleanObject::object_from_bool(left < right)))),
-            TokenKind::GreaterThan => {
-                Ok(Some(Rc::new(BooleanObject::object_from_bool(left > right))))
-            }
-            TokenKind::LessThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left <= right,
-            )))),
-            TokenKind::GreaterThanEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left >= right,
-            )))),
-
-            _ => self.invalid_operation(),
-        }
-    }
-
-    fn eval_boolean_boolean(
-        &self,
-        left: bool,
-        right: bool,
-    ) -> Result<Option<Rc<Object>>, EvalError> {
-        match self.op.kind {
-            TokenKind::EqualsEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left == right,
-            )))),
-            TokenKind::BangEquals => Ok(Some(Rc::new(BooleanObject::object_from_bool(
-                left != right,
-            )))),
-
-            _ => self.invalid_operation(),
-        }
-    }
-
-    fn invalid_operation(&self) -> Result<Option<Rc<Object>>, EvalError> {
-        Err(EvalError::InvalidInfixOperation {
-            operator: self.op.literal(),
-            left: self.left.to_string(),
-            right: self.right.to_string(),
-            position: self.op.position,
-        })
     }
 }
 
@@ -125,38 +36,6 @@ impl Node for Infixed {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for Infixed {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let left_operand =
-            (self.left.eval(Rc::clone(&env))?).expect("expression eval always returns Some");
-        let right_operand = (self.right.eval(env)?).expect("expression eval always returns Some");
-
-        match (&*left_operand, &*right_operand) {
-            (Object::INTEGER(left), Object::INTEGER(right)) => {
-                self.eval_integer_integer(left.0, right.0)
-            }
-            (Object::FLOAT(left), Object::FLOAT(right)) => self.eval_float_float(left.0, right.0),
-            (Object::INTEGER(left), Object::FLOAT(right)) => {
-                self.eval_float_float(left.0 as f64, right.0)
-            }
-            (Object::FLOAT(left), Object::INTEGER(right)) => {
-                self.eval_float_float(left.0, right.0 as f64)
-            }
-
-            (Object::BOOLEAN(left), Object::BOOLEAN(right)) => {
-                self.eval_boolean_boolean(left.0, right.0)
-            }
-
-            _ => Err(EvalError::InvalidInfixOperation {
-                operator: self.op.literal(),
-                left: self.left.to_string(),
-                right: self.right.to_string(),
-                position: self.op.position,
-            }),
-        }
     }
 }
 

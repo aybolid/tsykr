@@ -1,9 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object, FALSE, TRUE},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::Node;
 
@@ -39,48 +34,20 @@ impl Node for Boolean {
     }
 }
 
-impl Eval for Boolean {
-    fn eval(&self, _env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        match self.token.kind {
-            TokenKind::True => Ok(Some(Rc::new(TRUE))),
-            TokenKind::False => Ok(Some(Rc::new(FALSE))),
-            _ => unreachable!(),
-        }
+#[cfg(test)]
+mod tests {
+    use crate::lexer::Position;
+
+    use super::*;
+
+    #[test]
+    fn test_boolean_node() {
+        let token = Token::new(TokenKind::True, Position(0, 0));
+        let boolean = Boolean::new(token.clone());
+
+        assert!(boolean.as_any().is::<Boolean>());
+        assert_eq!(boolean.token, token);
+        assert_eq!(boolean.to_string(), token.literal());
+        assert_eq!(boolean.token_literal(), token.literal());
     }
 }
-
-// #[cfg(test)]
-// mod tests {
-//     use crate::lexer::Position;
-
-//     use super::*;
-
-//     #[test]
-//     fn test_boolean_node() {
-//         let token = Token::new(TokenKind::True, Position(0, 0));
-//         let boolean = Boolean::new(token.clone());
-
-//         assert!(boolean.as_any().is::<Boolean>());
-//         assert_eq!(boolean.token, token);
-//         assert_eq!(boolean.to_string(), token.literal());
-//         assert_eq!(boolean.token_literal(), token.literal());
-//     }
-
-//     #[test]
-//     fn test_boolean_eval() {
-//         let mut env = ExecEnvironment::new();
-//         let token = Token::new(TokenKind::True, Position(0, 0));
-//         let boolean = Boolean::new(token);
-
-//         let result = boolean.eval(&mut env).unwrap().unwrap();
-//         assert_eq!(*result, TRUE);
-//         assert_eq!(result.inspect(), "true");
-
-//         let token = Token::new(TokenKind::False, Position(0, 0));
-//         let boolean = Boolean::new(token);
-
-//         let result = boolean.eval(&mut env).unwrap().unwrap();
-//         assert_eq!(*result, FALSE);
-//         assert_eq!(result.inspect(), "false");
-//     }
-// }

@@ -1,14 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
 /// Let statement ast node.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct ReturnStatement {
     pub token: Token,
     pub value: Box<Expression>,
@@ -39,12 +34,6 @@ impl Node for ReturnStatement {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for ReturnStatement {
-    fn eval(&self, _env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        todo!()
     }
 }
 

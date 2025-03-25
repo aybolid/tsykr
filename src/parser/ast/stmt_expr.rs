@@ -1,14 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::Token,
-};
+use crate::lexer::Token;
 
 use super::{Expression, Node};
 
 /// Expression statement ast node.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct ExpressionStatement {
     pub token: Token,
     pub expression: Box<Expression>,
@@ -34,12 +29,6 @@ impl Node for ExpressionStatement {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for ExpressionStatement {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        self.expression.eval(env)
     }
 }
 

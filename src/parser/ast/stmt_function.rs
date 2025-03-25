@@ -1,12 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
-
 use super::{Block, Identifier, Node};
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, FunctionObject, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration {
     pub token: Token,
     pub identifier: Identifier,
@@ -60,21 +55,6 @@ impl Node for FunctionDeclaration {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for FunctionDeclaration {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let function_obj = FunctionObject::new_object(
-            Rc::downgrade(&env),
-            self.parameters.clone(),
-            self.body.clone(),
-        );
-
-        env.borrow_mut()
-            .set(self.identifier.to_string(), Rc::new(function_obj));
-
-        Ok(None)
     }
 }
 

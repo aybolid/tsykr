@@ -1,9 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, IntegerObject, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::Node;
 
@@ -39,15 +34,6 @@ impl Node for Integer {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for Integer {
-    fn eval(&self, _env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        match self.token.kind {
-            TokenKind::Integer(value) => Ok(Some(Rc::new(IntegerObject::new_object(value)))),
-            _ => unreachable!(),
-        }
     }
 }
 

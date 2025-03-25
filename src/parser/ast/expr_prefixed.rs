@@ -1,14 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
 /// Prefixed ast node.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct Prefixed {
     /// Operator token
     pub op: Token,
@@ -42,32 +37,6 @@ impl Node for Prefixed {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for Prefixed {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let operand = (self.right.eval(env)?).expect("all expressions return smth");
-        match self.op.kind {
-            TokenKind::Bang => match &*operand {
-                Object::BOOLEAN(b) => Ok(Some(Rc::new(b.negated_object()))),
-                _ => Err(EvalError::InvalidPrefixOperation {
-                    operator: self.op.literal(),
-                    operand: operand.inspect(),
-                    position: self.op.position,
-                }),
-            },
-            TokenKind::Minus => match &*operand {
-                Object::INTEGER(i) => Ok(Some(Rc::new(i.negated_object()))),
-                Object::FLOAT(f) => Ok(Some(Rc::new(f.negated_object()))),
-                _ => Err(EvalError::InvalidPrefixOperation {
-                    operator: self.op.literal(),
-                    operand: operand.inspect(),
-                    position: self.op.position,
-                }),
-            },
-            _ => unreachable!(),
-        }
     }
 }
 

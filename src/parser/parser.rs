@@ -100,7 +100,7 @@ impl Parser {
 
         let identifier = match self.parse_identifier() {
             Ok(identifier) => match identifier {
-                Expression::IDENTIFIER(identifier) => identifier,
+                Expression::IdentExpr(identifier) => identifier,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
@@ -113,13 +113,13 @@ impl Parser {
 
         let body = match self.parse_block_statement() {
             Ok(block) => match block {
-                Statement::BLOCK(block) => block,
+                Statement::BlockStatement(block) => block,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
         };
 
-        Ok(Statement::FUNCTION(FunctionDeclaration::new(
+        Ok(Statement::Fn(FunctionDeclaration::new(
             fn_token, identifier, params, body,
         )))
     }
@@ -145,7 +145,10 @@ impl Parser {
 
         self.expect_token_kind(&self.current_token, TokenKind::RightCurly)?;
 
-        Ok(Statement::BLOCK(Block::new(block_start_token, statements)))
+        Ok(Statement::BlockStatement(Block::new(
+            block_start_token,
+            statements,
+        )))
     }
 
     /// Parses a function parameters.
@@ -167,7 +170,7 @@ impl Parser {
 
         let ident = match self.parse_identifier() {
             Ok(identifier) => match identifier {
-                Expression::IDENTIFIER(identifier) => identifier,
+                Expression::IdentExpr(identifier) => identifier,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
@@ -184,7 +187,7 @@ impl Parser {
             self.next_token();
             let ident = match self.parse_identifier() {
                 Ok(identifier) => match identifier {
-                    Expression::IDENTIFIER(identifier) => identifier,
+                    Expression::IdentExpr(identifier) => identifier,
                     _ => unreachable!(),
                 },
                 Err(err) => return Err(err),
@@ -217,7 +220,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::EXPR(ExpressionStatement::new(expr_token, expr)))
+        Ok(Statement::Expr(ExpressionStatement::new(expr_token, expr)))
     }
 
     /// Parses an expression.
@@ -279,7 +282,7 @@ impl Parser {
         let call_token = self.current_token.take().expect("checked before");
         let arguments = self.parse_expression_list(TokenKind::RightParen)?;
 
-        Ok(Expression::CALL(FunctionCall::new(
+        Ok(Expression::CallExpr(FunctionCall::new(
             call_token, callee, arguments,
         )))
     }
@@ -333,13 +336,13 @@ impl Parser {
 
         let body = match self.parse_block_statement() {
             Ok(body) => match body {
-                Statement::BLOCK(block) => block,
+                Statement::BlockStatement(block) => block,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
         };
 
-        Ok(Expression::FUNCTION(FunctionExpression::new(
+        Ok(Expression::FnExpr(FunctionExpression::new(
             fn_token, params, body,
         )))
     }
@@ -362,7 +365,7 @@ impl Parser {
         let op_token = self.current_token.take().expect("checked before");
         self.next_token();
         let right = self.parse_expression(Precedence::from_token(op_token.clone()))?;
-        Ok(Expression::INFIXED(Infixed::new(op_token, left, right)))
+        Ok(Expression::InfixedExpr(Infixed::new(op_token, left, right)))
     }
 
     /// Parses a prefixed expression.
@@ -372,7 +375,7 @@ impl Parser {
         })?;
         let op_token = self.current_token.take().expect("checked before");
         self.next_token();
-        Ok(Expression::PREFIXED(Prefixed::new(
+        Ok(Expression::PrefixedExpr(Prefixed::new(
             op_token,
             self.parse_expression(Precedence::Prefix)?,
         )))
@@ -385,7 +388,7 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::True | TokenKind::False)
         })?;
-        Ok(Expression::BOOLEAN(Boolean::new(
+        Ok(Expression::BooleanExpr(Boolean::new(
             self.current_token.take().expect("checked before"),
         )))
     }
@@ -397,7 +400,7 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Float(_))
         })?;
-        Ok(Expression::FLOAT(Float::new(
+        Ok(Expression::FloatExpr(Float::new(
             self.current_token.take().expect("checked before"),
         )))
     }
@@ -409,7 +412,7 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Integer(_))
         })?;
-        Ok(Expression::INTEGER(Integer::new(
+        Ok(Expression::IntExpr(Integer::new(
             self.current_token.take().expect("checked before"),
         )))
     }
@@ -421,7 +424,7 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Identifier(_))
         })?;
-        Ok(Expression::IDENTIFIER(Identifier::new(
+        Ok(Expression::IdentExpr(Identifier::new(
             self.current_token.take().expect("checked before"),
         )))
     }
@@ -443,7 +446,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::RETURN(ReturnStatement::new(return_token, value)))
+        Ok(Statement::Return(ReturnStatement::new(return_token, value)))
     }
 
     /// Parses a let statement
@@ -454,7 +457,7 @@ impl Parser {
 
         let identifier = match self.parse_identifier() {
             Ok(identifier) => match identifier {
-                Expression::IDENTIFIER(identifier) => identifier,
+                Expression::IdentExpr(identifier) => identifier,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
@@ -475,7 +478,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::LET(LetStatement::new(
+        Ok(Statement::Let(LetStatement::new(
             let_token, identifier, value,
         )))
     }

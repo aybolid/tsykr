@@ -1,9 +1,4 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::Node;
 
@@ -39,18 +34,6 @@ impl Node for Identifier {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for Identifier {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        match env.borrow().get(&self.token.literal()) {
-            Some(obj) => Ok(Some(obj)),
-            None => Err(EvalError::UnknownIdentifier(
-                self.token.literal(),
-                self.token.position,
-            )),
-        }
     }
 }
 

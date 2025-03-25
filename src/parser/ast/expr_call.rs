@@ -1,13 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Node};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionCall {
     pub token: Token,
     pub function: Box<Expression>,
@@ -49,24 +44,6 @@ impl Node for FunctionCall {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for FunctionCall {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let mut args = Vec::new();
-        for arg in &self.arguments {
-            args.push((arg.eval(Rc::clone(&env))?).expect("has value"));
-        }
-        let function = (self.function.eval(env)?).expect("has value");
-
-        match &*function {
-            Object::FUNCTION(func) => func.call(args),
-            _ => Err(EvalError::NotAFunction(
-                function.inspect(),
-                self.token.position,
-            )),
-        }
     }
 }
 

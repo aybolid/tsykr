@@ -1,12 +1,7 @@
-use std::{cell::RefCell, rc::Rc};
-
 use super::{Block, Identifier, Node};
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct FunctionExpression {
     pub token: Token,
     pub parameters: Vec<Identifier>,
@@ -52,12 +47,6 @@ impl Node for FunctionExpression {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for FunctionExpression {
-    fn eval(&self, _env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        todo!()
     }
 }
 

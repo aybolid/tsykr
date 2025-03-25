@@ -1,7 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::eval::{ExecEnvironment, Object};
-
 use super::{Node, Statement};
 
 #[derive(Debug, PartialEq)]
@@ -16,22 +12,6 @@ impl Program {
 
     pub fn push_statement(&mut self, statement: Box<Statement>) {
         self.statements.push(statement);
-    }
-
-    pub fn eval_program(&self, env: Rc<RefCell<ExecEnvironment>>) -> Option<Rc<Object>> {
-        let mut result = None;
-
-        for statement in &self.statements {
-            match statement.eval(Rc::clone(&env)) {
-                Ok(obj) => result = obj,
-                Err(err) => {
-                    println!("Error: {}", err);
-                    break;
-                }
-            }
-        }
-
-        result
     }
 }
 

@@ -1,14 +1,9 @@
-use std::{cell::RefCell, rc::Rc};
-
-use crate::{
-    eval::{Eval, EvalError, ExecEnvironment, Object},
-    lexer::{Token, TokenKind},
-};
+use crate::lexer::{Token, TokenKind};
 
 use super::{Expression, Identifier, Node};
 
 /// Let statement ast node.
-#[derive(Debug, PartialEq, Clone)]
+#[derive(Debug, PartialEq)]
 pub struct LetStatement {
     pub token: Token,
     pub identifier: Identifier,
@@ -48,14 +43,6 @@ impl Node for LetStatement {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
-    }
-}
-
-impl Eval for LetStatement {
-    fn eval(&self, env: Rc<RefCell<ExecEnvironment>>) -> Result<Option<Rc<Object>>, EvalError> {
-        let value = (self.value.eval(Rc::clone(&env))?).expect("dont think its possible");
-        env.borrow_mut().set(self.identifier.to_string(), value);
-        Ok(None)
     }
 }
 
