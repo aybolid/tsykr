@@ -24,3 +24,14 @@ impl Value {
         Rc::new(self)
     }
 }
+
+impl ToString for Value {
+    fn to_string(&self) -> String {
+        match self {
+            Value::VOID => "void".to_string(),
+            Value::Integer(value) => value.to_string(),
+            Value::Float(value) => value.to_string(),
+            Value::Boolean(value) => value.to_string(),
+        }
+    }
+}

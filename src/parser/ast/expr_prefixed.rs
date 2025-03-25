@@ -1,5 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
-    eval::Eval,
+    eval::{Eval, EvalError, ExecutionEnvironment, Value, FALSE, TRUE},
     lexer::{Token, TokenKind},
 };
 
@@ -45,11 +47,39 @@ impl Node for Prefixed {
 }
 
 impl Eval for Prefixed {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let value = self.right.eval(env)?;
+
+        match self.op.kind {
+            TokenKind::Bang => match &*value {
+                Value::Boolean(b) => {
+                    if *b {
+                        Ok(FALSE.rc())
+                    } else {
+                        Ok(TRUE.rc())
+                    }
+                }
+                _ => Err(EvalError::InvalidPrefixOperation(
+                    self.op.literal(),
+                    value.to_string(),
+                    self.op.position,
+                )),
+            },
+            TokenKind::Minus => match &*value {
+                Value::Integer(i) => Ok(Value::new_integer(-i)),
+                Value::Float(f) => Ok(Value::new_float(-f)),
+                _ => Err(EvalError::InvalidPrefixOperation(
+                    self.op.literal(),
+                    value.to_string(),
+                    self.op.position,
+                )),
+            },
+            _ => Err(EvalError::InvalidPrefixOperation(
+                self.op.literal(),
+                value.to_string(),
+                self.op.position,
+            )),
+        }
     }
 }
 
@@ -62,14 +92,42 @@ mod tests {
     #[test]
     fn test_prefixed_node() {
         let token = Token::new(TokenKind::Minus, Position(0, 0));
-        let right = Box::new(Expression::Integer(Integer::new(Token::new(
+        let right = Box::new(Expression::new_integer(Token::new(
             TokenKind::Integer(42),
             Position(0, 0),
-        ))));
+        )));
         let prefixed = Prefixed::new(token.clone(), right);
 
         assert_eq!(prefixed.op, token);
         assert_eq!(prefixed.to_string(), "(-42)");
         assert_eq!(prefixed.token_literal(), token.literal());
+    }
+
+    #[test]
+    fn test_prefixed_eval() {
+        let token = Token::new(TokenKind::Minus, Position(0, 0));
+        let right = Box::new(Expression::Integer(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        ))));
+        let prefixed = Prefixed::new(token, right);
+
+        let env = ExecutionEnvironment::new_global();
+        let result = prefixed.eval(Rc::clone(&env));
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Value::new_integer(-42));
+
+        let token = Token::new(TokenKind::Bang, Position(0, 0));
+        let right = Box::new(Expression::new_boolean(Token::new(
+            TokenKind::True,
+            Position(0, 0),
+        )));
+        let prefixed = Prefixed::new(token, right);
+
+        let result = prefixed.eval(env);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), FALSE.rc());
     }
 }

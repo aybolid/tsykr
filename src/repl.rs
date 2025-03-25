@@ -28,7 +28,7 @@ pub fn run() {
 
         match parser.parse() {
             Ok(program) => match program.eval(Rc::clone(&env)) {
-                Ok(value) => println!("   {value:?}"),
+                Ok(value) => println!("   {}", value.to_string()),
                 Err(err) => eprintln!("Evaluation error: {err}"),
             },
             Err(errs) => {

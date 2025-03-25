@@ -15,6 +15,8 @@ pub enum EvalError {
     TriedToStoreVoid(Position),
     #[error("Not defined: {0} at {1}")]
     NotDefined(String, Position),
+    #[error("Invalid prefix operation: {0}{1} at {2}")]
+    InvalidPrefixOperation(String, String, Position),
 }
 
 pub trait Eval {
