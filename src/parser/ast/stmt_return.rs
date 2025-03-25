@@ -1,5 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
-    eval::Eval,
+    eval::{Eval, EvalError, ExecutionEnvironment, Value},
     lexer::{Token, TokenKind},
 };
 
@@ -39,18 +41,16 @@ impl Node for ReturnStatement {
 }
 
 impl Eval for ReturnStatement {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let value = self.value.eval(env)?;
+        Ok(Value::new_returned(value))
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::lexer::Position;
+    use crate::{eval::TRUE, lexer::Position};
 
     #[test]
     fn test_return_statement() {
@@ -61,5 +61,18 @@ mod tests {
 
         assert_eq!(stmt.token_literal(), token.literal());
         assert_eq!(stmt.to_string(), "return true");
+    }
+
+    #[test]
+    fn test_return_eval() {
+        let token = Token::new(TokenKind::Return, Position(0, 0));
+        let bool = Expression::new_boolean(Token::new(TokenKind::True, Position(0, 0)));
+
+        let stmt = ReturnStatement::new(token.clone(), Box::new(bool));
+
+        let env = ExecutionEnvironment::new_global();
+        let result = stmt.eval(env);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Value::new_returned(TRUE.rc()));
     }
 }

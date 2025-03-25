@@ -6,10 +6,13 @@ pub const FALSE: Value = Value::Boolean(false);
 
 #[derive(Debug, PartialEq)]
 pub enum Value {
-    VOID,
     Integer(i64),
     Float(f64),
     Boolean(bool),
+
+    Returned(Rc<Value>),
+
+    VOID,
 }
 
 impl Value {
@@ -18,6 +21,9 @@ impl Value {
     }
     pub fn new_float(value: f64) -> Rc<Self> {
         Rc::new(Value::Float(value))
+    }
+    pub fn new_returned(value: Rc<Value>) -> Rc<Self> {
+        Rc::new(Value::Returned(value))
     }
 
     pub fn rc(self) -> Rc<Self> {
@@ -32,6 +38,7 @@ impl ToString for Value {
             Value::Integer(value) => value.to_string(),
             Value::Float(value) => value.to_string(),
             Value::Boolean(value) => value.to_string(),
+            Value::Returned(value) => value.to_string(),
         }
     }
 }
