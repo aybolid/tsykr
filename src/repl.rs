@@ -14,7 +14,7 @@ pub fn run() {
     let mut stdout = std::io::stdout();
     let env = ExecutionEnvironment::new_global();
 
-    println!("Starting tsykr REPL...");
+    println!("Starting tsykr REPL...\n");
 
     loop {
         print!("{PROMPT}");
@@ -29,7 +29,7 @@ pub fn run() {
         match parser.parse() {
             Ok(program) => match program.eval(Rc::clone(&env)) {
                 Ok(value) => println!("   {:?}", value),
-                Err(err) => eprintln!("Evaluation error: {err}"),
+                Err(err) => eprintln!("   Evaluation error: {err}"),
             },
             Err(errs) => {
                 eprintln!("Parser errors:");

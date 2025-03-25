@@ -26,6 +26,14 @@ impl Value {
         Rc::new(Value::Returned(value))
     }
 
+    pub fn from_native_bool(value: bool) -> Rc<Self> {
+        if value {
+            TRUE.rc()
+        } else {
+            FALSE.rc()
+        }
+    }
+
     pub fn rc(self) -> Rc<Self> {
         Rc::new(self)
     }

@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    eval::{Eval, EvalError, ExecutionEnvironment, Value, FALSE, TRUE},
+    eval::{Eval, EvalError, ExecutionEnvironment, Value},
     lexer::{Token, TokenKind},
 };
 
@@ -52,13 +52,7 @@ impl Eval for Prefixed {
 
         match self.op.kind {
             TokenKind::Bang => match &*value {
-                Value::Boolean(b) => {
-                    if *b {
-                        Ok(FALSE.rc())
-                    } else {
-                        Ok(TRUE.rc())
-                    }
-                }
+                Value::Boolean(b) => Ok(Value::from_native_bool(!b)),
                 _ => Err(EvalError::InvalidPrefixOperation(
                     self.op.literal(),
                     value.to_string(),
@@ -85,7 +79,7 @@ impl Eval for Prefixed {
 
 #[cfg(test)]
 mod tests {
-    use crate::{lexer::Position, parser::Integer};
+    use crate::{eval::FALSE, lexer::Position, parser::Integer};
 
     use super::*;
 
