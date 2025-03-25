@@ -44,6 +44,14 @@ impl Value {
         }
     }
 
+    // Returns the inner value of a Returned variant or VOID if not a Returned variant
+    pub fn unwrap_returned(&self) -> Rc<Value> {
+        match self {
+            Value::Returned(value) => Rc::clone(&value),
+            _ => VOID.rc(),
+        }
+    }
+
     pub fn rc(self) -> Rc<Self> {
         Rc::new(self)
     }
