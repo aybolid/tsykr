@@ -41,23 +41,23 @@ impl Node for Prefixed {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{lexer::Position, parser::Integer};
+#[cfg(test)]
+mod tests {
+    use crate::{lexer::Position, parser::Integer};
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_prefixed_node() {
-//         let token = Token::new(TokenKind::Minus, Position(0, 0));
-//         let right = Box::new(Integer::new(Token::new(
-//             TokenKind::Integer(42),
-//             Position(0, 0),
-//         )));
-//         let prefixed = Prefixed::new(token.clone(), right);
+    #[test]
+    fn test_prefixed_node() {
+        let token = Token::new(TokenKind::Minus, Position(0, 0));
+        let right = Box::new(Expression::IntExpr(Integer::new(Token::new(
+            TokenKind::Integer(42),
+            Position(0, 0),
+        ))));
+        let prefixed = Prefixed::new(token.clone(), right);
 
-//         assert_eq!(prefixed.op, token);
-//         assert_eq!(prefixed.to_string(), "(-42)");
-//         assert_eq!(prefixed.token_literal(), token.literal());
-//     }
-// }
+        assert_eq!(prefixed.op, token);
+        assert_eq!(prefixed.to_string(), "(-42)");
+        assert_eq!(prefixed.token_literal(), token.literal());
+    }
+}
