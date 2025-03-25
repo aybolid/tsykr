@@ -1,4 +1,9 @@
-use crate::{eval::Eval, lexer::Token};
+use std::{cell::RefCell, rc::Rc};
+
+use crate::{
+    eval::{Eval, EvalError, ExecutionEnvironment, Value},
+    lexer::Token,
+};
 
 use super::{Expression, Node};
 
@@ -32,11 +37,8 @@ impl Node for ExpressionStatement {
 }
 
 impl Eval for ExpressionStatement {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        self.expression.eval(env)
     }
 }
 

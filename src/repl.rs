@@ -1,6 +1,10 @@
-use std::io::Write;
+use std::{io::Write, rc::Rc};
 
-use crate::{lexer::Lexer, parser::Parser};
+use crate::{
+    eval::{Eval, ExecutionEnvironment},
+    lexer::Lexer,
+    parser::Parser,
+};
 
 const PROMPT: &str = ">> ";
 
@@ -8,6 +12,7 @@ const PROMPT: &str = ">> ";
 pub fn run() {
     let stdin = std::io::stdin();
     let mut stdout = std::io::stdout();
+    let env = ExecutionEnvironment::new_global();
 
     println!("Starting tsykr REPL...");
 
@@ -22,9 +27,10 @@ pub fn run() {
         let mut parser = Parser::new(lexer);
 
         match parser.parse() {
-            Ok(program) => {
-                println!("{program:?}");
-            }
+            Ok(program) => match program.eval(Rc::clone(&env)) {
+                Ok(value) => println!("=> {value:?}"),
+                Err(err) => eprintln!("Evaluation error: {err}"),
+            },
             Err(errs) => {
                 eprintln!("Parser errors:");
                 for err in errs {

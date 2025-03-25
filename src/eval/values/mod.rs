@@ -4,6 +4,7 @@ pub const VOID: Value = Value::VOID;
 pub const TRUE: Value = Value::Boolean(true);
 pub const FALSE: Value = Value::Boolean(false);
 
+#[derive(Debug, PartialEq)]
 pub enum Value {
     VOID,
     Integer(i64),

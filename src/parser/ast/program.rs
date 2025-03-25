@@ -1,4 +1,6 @@
-use crate::eval::Eval;
+use std::{cell::RefCell, rc::Rc};
+
+use crate::eval::{Eval, EvalError, ExecutionEnvironment, Value, VOID};
 
 use super::{Node, Statement};
 
@@ -38,11 +40,12 @@ impl Node for Program {
 }
 
 impl Eval for Program {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let mut result = VOID.rc();
+        for stmt in &self.statements {
+            result = stmt.eval(Rc::clone(&env))?;
+        }
+        Ok(result)
     }
 }
 
