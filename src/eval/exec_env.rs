@@ -21,13 +21,6 @@ impl ExecutionEnvironment {
             LocalEnvironment::new(parent),
         )))
     }
-
-    pub fn debug_string(&self) -> String {
-        match self {
-            ExecutionEnvironment::Global(env) => format!("{:#?}", env.store),
-            ExecutionEnvironment::Local(env) => format!("{:#?}", env.store),
-        }
-    }
 }
 
 impl Environment for ExecutionEnvironment {
