@@ -23,12 +23,29 @@ pub fn run() {
 
         stdin.read_line(&mut buf).unwrap();
 
+        if buf == "?\n" {
+            println!("   {}", env.borrow().debug_string());
+            continue;
+        }
+
+        let mut debug_print = false;
+        if buf.starts_with("?") {
+            debug_print = true;
+            buf = buf.strip_prefix("?").unwrap().to_string();
+        }
+
         let lexer = Lexer::new(buf);
         let mut parser = Parser::new(lexer);
 
         match parser.parse() {
             Ok(program) => match program.eval(Rc::clone(&env)) {
-                Ok(value) => println!("   {:?}", value),
+                Ok(value) => {
+                    if debug_print {
+                        println!("   {:?}", value)
+                    } else {
+                        println!("   {}", value.to_string())
+                    }
+                }
                 Err(err) => eprintln!("   Evaluation error: {err}"),
             },
             Err(errs) => {
