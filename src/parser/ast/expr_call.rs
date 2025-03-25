@@ -1,4 +1,7 @@
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 use super::{Expression, Node};
 
@@ -48,6 +51,15 @@ impl Node for FunctionCall {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for FunctionCall {
+    fn eval(
+        &self,
+        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
+    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
+        todo!()
     }
 }
 

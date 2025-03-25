@@ -1,3 +1,5 @@
+use crate::eval::Eval;
+
 use super::{Node, Statement};
 
 #[derive(Debug, PartialEq)]
@@ -35,30 +37,42 @@ impl Node for Program {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use super::*;
-//     use crate::lexer::{Position, Token, TokenKind};
-//     use crate::parser::{Boolean, ExpressionStatement, Integer, ReturnStatement};
+impl Eval for Program {
+    fn eval(
+        &self,
+        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
+    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
+        todo!()
+    }
+}
 
-//     #[test]
-//     fn test_program() {
-//         let mut program = Program::new();
-//         program.push_statement(Box::new(ExpressionStatement::new(
-//             Token::new(TokenKind::Integer(5), Position(0, 0)),
-//             Box::new(Integer::new(Token::new(
-//                 TokenKind::Integer(5),
-//                 Position(0, 0),
-//             ))),
-//         )));
-//         program.push_statement(Box::new(ReturnStatement::new(
-//             Token::new(TokenKind::Return, Position(0, 0)),
-//             Box::new(Boolean::new(Token::new(TokenKind::True, Position(0, 0)))),
-//         )));
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::{Position, Token, TokenKind};
+    use crate::parser::Expression;
 
-//         assert!(program.as_any().is::<Program>());
-//         assert_eq!(program.statements.len(), 2);
-//         assert_eq!(program.token_literal(), "");
-//         assert_eq!(program.to_string(), "5\nreturn true")
-//     }
-// }
+    #[test]
+    fn test_program() {
+        let mut program = Program::new();
+        program.push_statement(Box::new(Statement::new_expression(
+            Token::new(TokenKind::Integer(5), Position(0, 0)),
+            Box::new(Expression::new_integer(Token::new(
+                TokenKind::Integer(5),
+                Position(0, 0),
+            ))),
+        )));
+        program.push_statement(Box::new(Statement::new_return(
+            Token::new(TokenKind::Return, Position(0, 0)),
+            Box::new(Expression::new_boolean(Token::new(
+                TokenKind::True,
+                Position(0, 0),
+            ))),
+        )));
+
+        assert!(program.as_any().is::<Program>());
+        assert_eq!(program.statements.len(), 2);
+        assert_eq!(program.token_literal(), "");
+        assert_eq!(program.to_string(), "5\nreturn true")
+    }
+}

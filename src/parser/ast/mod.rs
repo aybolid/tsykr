@@ -13,7 +13,7 @@ mod stmt_function;
 mod stmt_let;
 mod stmt_return;
 
-use std::fmt::Debug;
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
 pub use expr_boolean::*;
 pub use expr_call::*;
@@ -30,12 +30,16 @@ pub use stmt_function::*;
 pub use stmt_let::*;
 pub use stmt_return::*;
 
-use crate::lexer::Token;
+use crate::{
+    eval::{Eval, EvalError, ExecutionEnvironment, Value},
+    lexer::Token,
+};
 
 pub trait Node
 where
     Self: ToString,
     Self: Debug,
+    Self: Eval,
 {
     /// Returns a token literal of the node.
     fn token_literal(&self) -> String;
@@ -72,6 +76,18 @@ impl Statement {
         body: Block,
     ) -> Self {
         Statement::FunctionDeclaration(FunctionDeclaration::new(token, name, params, body))
+    }
+}
+
+impl Eval for Statement {
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        match self {
+            Statement::Block(block) => block.eval(env),
+            Statement::ExpressionStatement(expr_stmt) => expr_stmt.eval(env),
+            Statement::LetStatement(let_stmt) => let_stmt.eval(env),
+            Statement::ReturnStatement(return_stmt) => return_stmt.eval(env),
+            Statement::FunctionDeclaration(func_decl) => func_decl.eval(env),
+        }
     }
 }
 
@@ -149,6 +165,21 @@ impl Expression {
     }
     pub fn new_infixed(op_token: Token, left: Box<Expression>, right: Box<Expression>) -> Self {
         Expression::Infixed(Infixed::new(op_token, left, right))
+    }
+}
+
+impl Eval for Expression {
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        match self {
+            Expression::Boolean(boolean) => boolean.eval(env),
+            Expression::FunctionCall(call) => call.eval(env),
+            Expression::Float(float) => float.eval(env),
+            Expression::Function(func) => func.eval(env),
+            Expression::Identifier(ident) => ident.eval(env),
+            Expression::Infixed(infix) => infix.eval(env),
+            Expression::Integer(int) => int.eval(env),
+            Expression::Prefixed(prefix) => prefix.eval(env),
+        }
     }
 }
 

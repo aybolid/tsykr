@@ -1,5 +1,8 @@
 use super::{Block, Identifier, Node};
-use crate::lexer::{Token, TokenKind};
+use crate::{
+    eval::Eval,
+    lexer::{Token, TokenKind},
+};
 
 #[derive(Debug, PartialEq)]
 pub struct FunctionDeclaration {
@@ -55,6 +58,15 @@ impl Node for FunctionDeclaration {
 
     fn as_any(&self) -> &dyn std::any::Any {
         self
+    }
+}
+
+impl Eval for FunctionDeclaration {
+    fn eval(
+        &self,
+        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
+    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
+        todo!()
     }
 }
 
