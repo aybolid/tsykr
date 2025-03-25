@@ -2,6 +2,7 @@ use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use super::Value;
 
+#[derive(Debug, PartialEq)]
 pub enum ExecutionEnvironment {
     Global(GlobalEnvironment),
     /// Scoped environment for local variables. Includes parent execution environment.
@@ -45,6 +46,7 @@ impl Environment for ExecutionEnvironment {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct GlobalEnvironment {
     store: HashMap<String, Rc<Value>>,
 }
@@ -67,6 +69,7 @@ impl Environment for GlobalEnvironment {
     }
 }
 
+#[derive(Debug, PartialEq)]
 pub struct LocalEnvironment {
     store: HashMap<String, Rc<Value>>,
     parent: Rc<RefCell<ExecutionEnvironment>>,

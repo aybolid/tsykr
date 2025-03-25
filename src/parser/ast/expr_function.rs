@@ -56,13 +56,13 @@ impl Node for FunctionExpression {
 }
 
 impl Eval for FunctionExpression {
-    fn eval(&self, _env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
         let params = self
             .parameters
             .iter()
             .map(|ident| ident.to_string())
             .collect::<Vec<String>>();
-        Ok(Value::new_function(params, Rc::clone(&self.body)))
+        Ok(Value::new_function(params, Rc::clone(&self.body), env))
     }
 }
 

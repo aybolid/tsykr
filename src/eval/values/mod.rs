@@ -1,10 +1,12 @@
-use std::rc::Rc;
+use std::{cell::RefCell, rc::Rc};
 
 use crate::parser::Block;
 
 mod function;
 
 pub use function::*;
+
+use super::ExecutionEnvironment;
 
 pub const VOID: Value = Value::VOID;
 pub const TRUE: Value = Value::Boolean(true);
@@ -32,8 +34,12 @@ impl Value {
     pub fn new_returned(value: Rc<Value>) -> Rc<Self> {
         Rc::new(Value::Returned(value))
     }
-    pub fn new_function(params: Vec<String>, body: Rc<Block>) -> Rc<Self> {
-        Rc::new(Value::Function(Function::new(params, body)))
+    pub fn new_function(
+        params: Vec<String>,
+        body: Rc<Block>,
+        env: Rc<RefCell<ExecutionEnvironment>>,
+    ) -> Rc<Self> {
+        Rc::new(Value::Function(Function::new(params, body, env)))
     }
 
     pub fn from_native_bool(value: bool) -> Rc<Self> {
@@ -49,6 +55,13 @@ impl Value {
         match self {
             Value::Returned(value) => Rc::clone(&value),
             _ => VOID.rc(),
+        }
+    }
+
+    pub fn is_void(&self) -> bool {
+        match self {
+            Value::VOID => true,
+            _ => false,
         }
     }
 

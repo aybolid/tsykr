@@ -21,6 +21,12 @@ pub enum EvalError {
     InvalidInfixOperation(String, String, String, Position),
     #[error("Division by zero: {0}/{1} at {2}")]
     DivisionByZero(String, String, Position),
+    #[error("Void as an function argument at {0}")]
+    VoidValueAsArgument(Position),
+    #[error("Not a function: {0}")]
+    NotAFunction(Position),
+    #[error("Wrong number of arguments: expected {0}, got {1} at {2}")]
+    WrongNumberOfArguments(usize, usize, Position),
 }
 
 pub trait Eval {

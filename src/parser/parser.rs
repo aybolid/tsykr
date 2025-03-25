@@ -79,7 +79,6 @@ impl Parser {
                 {
                     Ok(Box::new(self.parse_function_declaration_statement()?))
                 }
-                TokenKind::LeftCurly => Ok(Box::new(self.parse_block_statement()?)),
                 TokenKind::ILLEGAL(_) => Err(ParserError::InvalidToken(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
             }
