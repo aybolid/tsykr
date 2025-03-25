@@ -61,11 +61,11 @@ mod tests {
     fn test_function_call() {
         let call = FunctionCall::new(
             Token::new(TokenKind::LeftParen, Position(0, 0)),
-            Box::new(Expression::new_ident(Token::new(
+            Box::new(Expression::new_identifier(Token::new(
                 TokenKind::Identifier("my_func".to_string()),
                 Position(0, 0),
             ))),
-            vec![Box::new(Expression::new_int(Token::new(
+            vec![Box::new(Expression::new_integer(Token::new(
                 TokenKind::Integer(42),
                 Position(0, 0),
             )))],

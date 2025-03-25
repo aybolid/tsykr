@@ -70,14 +70,14 @@ mod tests {
                         TokenKind::Identifier("x".to_string()),
                         Position(0, 0),
                     )),
-                    Box::new(Expression::new_int(Token::new(
+                    Box::new(Expression::new_integer(Token::new(
                         TokenKind::Integer(5),
                         Position(0, 0),
                     ))),
                 )),
                 Box::new(Statement::new_return(
                     Token::new(TokenKind::Return, Position(0, 0)),
-                    Box::new(Expression::new_ident(Token::new(
+                    Box::new(Expression::new_identifier(Token::new(
                         TokenKind::Identifier("x".to_string()),
                         Position(0, 0),
                     ))),

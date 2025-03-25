@@ -45,49 +45,54 @@ where
 
 #[derive(Debug, PartialEq)]
 pub enum Statement {
-    BlockStatement(Block),
-    Expr(ExpressionStatement),
-    Let(LetStatement),
-    Return(ReturnStatement),
-    Fn(FunctionDeclaration),
+    Block(Block),
+    ExpressionStatement(ExpressionStatement),
+    LetStatement(LetStatement),
+    ReturnStatement(ReturnStatement),
+    FunctionDeclaration(FunctionDeclaration),
 }
 
 impl Statement {
     pub fn new_block(token: Token, statements: Vec<Box<Statement>>) -> Self {
-        Statement::BlockStatement(Block::new(token, statements))
+        Statement::Block(Block::new(token, statements))
     }
-    pub fn new_expr(token: Token, expr: Box<Expression>) -> Self {
-        Statement::Expr(ExpressionStatement::new(token, expr))
+    pub fn new_expression(token: Token, expr: Box<Expression>) -> Self {
+        Statement::ExpressionStatement(ExpressionStatement::new(token, expr))
     }
     pub fn new_let(token: Token, name: Identifier, value: Box<Expression>) -> Self {
-        Statement::Let(LetStatement::new(token, name, value))
+        Statement::LetStatement(LetStatement::new(token, name, value))
     }
     pub fn new_return(token: Token, value: Box<Expression>) -> Self {
-        Statement::Return(ReturnStatement::new(token, value))
+        Statement::ReturnStatement(ReturnStatement::new(token, value))
     }
-    pub fn new_fn(token: Token, name: Identifier, params: Vec<Identifier>, body: Block) -> Self {
-        Statement::Fn(FunctionDeclaration::new(token, name, params, body))
+    pub fn new_function(
+        token: Token,
+        name: Identifier,
+        params: Vec<Identifier>,
+        body: Block,
+    ) -> Self {
+        Statement::FunctionDeclaration(FunctionDeclaration::new(token, name, params, body))
     }
 }
 
 impl Node for Statement {
     fn token_literal(&self) -> String {
         match self {
-            Statement::BlockStatement(block) => block.token_literal(),
-            Statement::Expr(expr_stmt) => expr_stmt.token_literal(),
-            Statement::Let(let_stmt) => let_stmt.token_literal(),
-            Statement::Return(return_stmt) => return_stmt.token_literal(),
-            Statement::Fn(func_decl) => func_decl.token_literal(),
+            Statement::Block(block) => block.token_literal(),
+            Statement::ExpressionStatement(expr_stmt) => expr_stmt.token_literal(),
+            Statement::LetStatement(let_stmt) => let_stmt.token_literal(),
+            Statement::ReturnStatement(return_stmt) => return_stmt.token_literal(),
+            Statement::FunctionDeclaration(func_decl) => func_decl.token_literal(),
         }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         match self {
-            Statement::BlockStatement(block) => block,
-            Statement::Expr(expr_stmt) => expr_stmt,
-            Statement::Let(let_stmt) => let_stmt,
-            Statement::Return(return_stmt) => return_stmt,
-            Statement::Fn(func_decl) => func_decl,
+            Statement::Block(block) => block,
+            Statement::ExpressionStatement(expr_stmt) => expr_stmt,
+            Statement::LetStatement(let_stmt) => let_stmt,
+            Statement::ReturnStatement(return_stmt) => return_stmt,
+            Statement::FunctionDeclaration(func_decl) => func_decl,
         }
     }
 }
@@ -95,78 +100,82 @@ impl Node for Statement {
 impl ToString for Statement {
     fn to_string(&self) -> String {
         match self {
-            Statement::BlockStatement(block) => block.to_string(),
-            Statement::Expr(expr_stmt) => expr_stmt.to_string(),
-            Statement::Let(let_stmt) => let_stmt.to_string(),
-            Statement::Return(return_stmt) => return_stmt.to_string(),
-            Statement::Fn(func_decl) => func_decl.to_string(),
+            Statement::Block(block) => block.to_string(),
+            Statement::ExpressionStatement(expr_stmt) => expr_stmt.to_string(),
+            Statement::LetStatement(let_stmt) => let_stmt.to_string(),
+            Statement::ReturnStatement(return_stmt) => return_stmt.to_string(),
+            Statement::FunctionDeclaration(func_decl) => func_decl.to_string(),
         }
     }
 }
 
 #[derive(Debug, PartialEq)]
 pub enum Expression {
-    BooleanExpr(Boolean),
-    CallExpr(FunctionCall),
-    FloatExpr(Float),
-    FnExpr(FunctionExpression),
-    IdentExpr(Identifier),
-    InfixedExpr(Infixed),
-    IntExpr(Integer),
-    PrefixedExpr(Prefixed),
+    Boolean(Boolean),
+    FunctionCall(FunctionCall),
+    Float(Float),
+    Function(FunctionExpression),
+    Identifier(Identifier),
+    Infixed(Infixed),
+    Integer(Integer),
+    Prefixed(Prefixed),
 }
 
 impl Expression {
     pub fn new_boolean(token: Token) -> Self {
-        Expression::BooleanExpr(Boolean::new(token))
+        Expression::Boolean(Boolean::new(token))
     }
-    pub fn new_call(token: Token, func: Box<Expression>, args: Vec<Box<Expression>>) -> Self {
-        Expression::CallExpr(FunctionCall::new(token, func, args))
+    pub fn new_function_call(
+        token: Token,
+        func: Box<Expression>,
+        args: Vec<Box<Expression>>,
+    ) -> Self {
+        Expression::FunctionCall(FunctionCall::new(token, func, args))
     }
     pub fn new_float(token: Token) -> Self {
-        Expression::FloatExpr(Float::new(token))
+        Expression::Float(Float::new(token))
     }
-    pub fn new_int(token: Token) -> Self {
-        Expression::IntExpr(Integer::new(token))
+    pub fn new_integer(token: Token) -> Self {
+        Expression::Integer(Integer::new(token))
     }
-    pub fn new_fn(token: Token, params: Vec<Identifier>, body: Block) -> Self {
-        Expression::FnExpr(FunctionExpression::new(token, params, body))
+    pub fn new_function(token: Token, params: Vec<Identifier>, body: Block) -> Self {
+        Expression::Function(FunctionExpression::new(token, params, body))
     }
-    pub fn new_ident(token: Token) -> Self {
-        Expression::IdentExpr(Identifier::new(token))
+    pub fn new_identifier(token: Token) -> Self {
+        Expression::Identifier(Identifier::new(token))
     }
     pub fn new_prefixed(op_token: Token, right: Box<Expression>) -> Self {
-        Expression::PrefixedExpr(Prefixed::new(op_token, right))
+        Expression::Prefixed(Prefixed::new(op_token, right))
     }
     pub fn new_infixed(op_token: Token, left: Box<Expression>, right: Box<Expression>) -> Self {
-        Expression::InfixedExpr(Infixed::new(op_token, left, right))
+        Expression::Infixed(Infixed::new(op_token, left, right))
     }
 }
 
 impl Node for Expression {
     fn token_literal(&self) -> String {
         match self {
-            Expression::BooleanExpr(boolean) => boolean.token_literal(),
-            Expression::CallExpr(call) => call.token_literal(),
-            Expression::FloatExpr(float) => float.token_literal(),
-            Expression::FnExpr(func) => func.token_literal(),
-            Expression::IdentExpr(ident) => ident.token_literal(),
-            Expression::InfixedExpr(infix) => infix.token_literal(),
-            Expression::IntExpr(int) => int.token_literal(),
-            Expression::PrefixedExpr(prefix) => prefix.token_literal(),
+            Expression::Boolean(boolean) => boolean.token_literal(),
+            Expression::FunctionCall(call) => call.token_literal(),
+            Expression::Float(float) => float.token_literal(),
+            Expression::Function(func) => func.token_literal(),
+            Expression::Identifier(ident) => ident.token_literal(),
+            Expression::Infixed(infix) => infix.token_literal(),
+            Expression::Integer(int) => int.token_literal(),
+            Expression::Prefixed(prefix) => prefix.token_literal(),
         }
     }
 
     fn as_any(&self) -> &dyn std::any::Any {
         match self {
-            Expression::BooleanExpr(boolean) => boolean,
-            Expression::CallExpr(call) => call,
-            Expression::FloatExpr(float) => float,
-            Expression::FnExpr(func) => func,
-            Expression::IdentExpr(ident) => ident,
-            Expression::InfixedExpr(infix) => infix,
-            Expression::IntExpr(int) => int,
-            Expression::PrefixedExpr(prefix) => prefix,
+            Expression::Boolean(boolean) => boolean,
+            Expression::FunctionCall(call) => call,
+            Expression::Float(float) => float,
+            Expression::Function(func) => func,
+            Expression::Identifier(ident) => ident,
+            Expression::Infixed(infix) => infix,
+            Expression::Integer(int) => int,
+            Expression::Prefixed(prefix) => prefix,
         }
     }
 }
@@ -174,14 +183,14 @@ impl Node for Expression {
 impl ToString for Expression {
     fn to_string(&self) -> String {
         match self {
-            Expression::BooleanExpr(boolean) => boolean.to_string(),
-            Expression::CallExpr(call) => call.to_string(),
-            Expression::FloatExpr(float) => float.to_string(),
-            Expression::FnExpr(func) => func.to_string(),
-            Expression::IdentExpr(ident) => ident.to_string(),
-            Expression::InfixedExpr(infix) => infix.to_string(),
-            Expression::IntExpr(int) => int.to_string(),
-            Expression::PrefixedExpr(prefix) => prefix.to_string(),
+            Expression::Boolean(boolean) => boolean.to_string(),
+            Expression::FunctionCall(call) => call.to_string(),
+            Expression::Float(float) => float.to_string(),
+            Expression::Function(func) => func.to_string(),
+            Expression::Identifier(ident) => ident.to_string(),
+            Expression::Infixed(infix) => infix.to_string(),
+            Expression::Integer(int) => int.to_string(),
+            Expression::Prefixed(prefix) => prefix.to_string(),
         }
     }
 }

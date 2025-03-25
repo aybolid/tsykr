@@ -56,7 +56,7 @@ mod tests {
             TokenKind::Identifier("who_cares".to_string()),
             Position(0, 0),
         ));
-        let int = Expression::new_int(Token::new(TokenKind::Integer(69), Position(0, 0)));
+        let int = Expression::new_integer(Token::new(TokenKind::Integer(69), Position(0, 0)));
 
         let stmt = LetStatement::new(token.clone(), ident, Box::new(int));
 

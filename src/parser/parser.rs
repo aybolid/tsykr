@@ -96,7 +96,7 @@ impl Parser {
 
         let identifier = match self.parse_identifier() {
             Ok(identifier) => match identifier {
-                Expression::IdentExpr(identifier) => identifier,
+                Expression::Identifier(identifier) => identifier,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
@@ -109,13 +109,13 @@ impl Parser {
 
         let body = match self.parse_block_statement() {
             Ok(block) => match block {
-                Statement::BlockStatement(block) => block,
+                Statement::Block(block) => block,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
         };
 
-        Ok(Statement::new_fn(fn_token, identifier, params, body))
+        Ok(Statement::new_function(fn_token, identifier, params, body))
     }
 
     /// Parses a block statement.
@@ -161,7 +161,7 @@ impl Parser {
 
         let ident = match self.parse_identifier() {
             Ok(identifier) => match identifier {
-                Expression::IdentExpr(identifier) => identifier,
+                Expression::Identifier(identifier) => identifier,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
@@ -178,7 +178,7 @@ impl Parser {
             self.next_token();
             let ident = match self.parse_identifier() {
                 Ok(identifier) => match identifier {
-                    Expression::IdentExpr(identifier) => identifier,
+                    Expression::Identifier(identifier) => identifier,
                     _ => unreachable!(),
                 },
                 Err(err) => return Err(err),
@@ -211,7 +211,7 @@ impl Parser {
             self.next_token();
         }
 
-        Ok(Statement::new_expr(expr_token, expr))
+        Ok(Statement::new_expression(expr_token, expr))
     }
 
     /// Parses an expression.
@@ -273,7 +273,7 @@ impl Parser {
         let call_token = self.current_token.take().expect("checked before");
         let arguments = self.parse_expression_list(TokenKind::RightParen)?;
 
-        Ok(Expression::new_call(call_token, callee, arguments))
+        Ok(Expression::new_function_call(call_token, callee, arguments))
     }
 
     /// Parses a list of expressions separated by commas.
@@ -325,13 +325,13 @@ impl Parser {
 
         let body = match self.parse_block_statement() {
             Ok(body) => match body {
-                Statement::BlockStatement(block) => block,
+                Statement::Block(block) => block,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
         };
 
-        Ok(Expression::new_fn(fn_token, params, body))
+        Ok(Expression::new_function(fn_token, params, body))
     }
 
     /// Parses a grouped expression (wrapped in parentheses).
@@ -399,7 +399,7 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Integer(_))
         })?;
-        Ok(Expression::new_int(
+        Ok(Expression::new_integer(
             self.current_token.take().expect("checked before"),
         ))
     }
@@ -411,7 +411,7 @@ impl Parser {
         self.expect_token_fn(&self.current_token, |t| {
             matches!(t.kind, TokenKind::Identifier(_))
         })?;
-        Ok(Expression::new_ident(
+        Ok(Expression::new_identifier(
             self.current_token.take().expect("checked before"),
         ))
     }
@@ -444,7 +444,7 @@ impl Parser {
 
         let identifier = match self.parse_identifier() {
             Ok(identifier) => match identifier {
-                Expression::IdentExpr(identifier) => identifier,
+                Expression::Identifier(identifier) => identifier,
                 _ => unreachable!(),
             },
             Err(err) => return Err(err),
@@ -533,11 +533,11 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Let(let_stmt) => {
+            Statement::LetStatement(let_stmt) => {
                 assert_eq!(let_stmt.identifier.token.literal(), "x");
 
                 match let_stmt.value.as_ref() {
-                    Expression::IntExpr(int_expr) => {
+                    Expression::Integer(int_expr) => {
                         assert_eq!(int_expr.token.literal(), "5");
                     }
                     _ => panic!("Expected integer expression"),
@@ -553,8 +553,8 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Return(return_stmt) => match return_stmt.value.as_ref() {
-                Expression::IntExpr(int_expr) => {
+            Statement::ReturnStatement(return_stmt) => match return_stmt.value.as_ref() {
+                Expression::Integer(int_expr) => {
                     assert_eq!(int_expr.token.literal(), "5");
                 }
                 _ => panic!("Expected integer expression"),
@@ -569,8 +569,8 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
-                Expression::IdentExpr(ident) => {
+            Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::Identifier(ident) => {
                     assert_eq!(ident.token.literal(), "foobar");
                 }
                 _ => panic!("Expected identifier expression"),
@@ -585,8 +585,8 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
-                Expression::IntExpr(int_expr) => {
+            Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::Integer(int_expr) => {
                     assert_eq!(int_expr.token.literal(), "5");
                 }
                 _ => panic!("Expected integer expression"),
@@ -601,8 +601,8 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
-                Expression::FloatExpr(float_expr) => {
+            Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::Float(float_expr) => {
                     assert_eq!(float_expr.token.literal(), "5.5");
                 }
                 _ => panic!("Expected float expression"),
@@ -619,8 +619,8 @@ mod parser_tests {
             let statement = parse_first_statement(input).unwrap();
 
             match *statement {
-                Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
-                    Expression::BooleanExpr(bool_expr) => {
+                Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                    Expression::Boolean(bool_expr) => {
                         assert_eq!(bool_expr.token.literal(), input.trim_end_matches(';'));
                     }
                     _ => panic!("Expected boolean expression"),
@@ -641,11 +641,11 @@ mod parser_tests {
             let statement = parse_first_statement(input).unwrap();
 
             match *statement {
-                Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
-                    Expression::PrefixedExpr(prefix_expr) => {
+                Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                    Expression::Prefixed(prefix_expr) => {
                         assert_eq!(prefix_expr.op.kind, expected_prefix);
                         match prefix_expr.right.as_ref() {
-                            Expression::IntExpr(int_expr) => {
+                            Expression::Integer(int_expr) => {
                                 assert_eq!(int_expr.token.literal(), expected_value);
                             }
                             _ => panic!("Expected integer expression"),
@@ -675,19 +675,19 @@ mod parser_tests {
             let statement = parse_first_statement(input).unwrap();
 
             match *statement {
-                Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
-                    Expression::InfixedExpr(infix_expr) => {
+                Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                    Expression::Infixed(infix_expr) => {
                         assert_eq!(infix_expr.op.kind, expected_op);
 
                         match infix_expr.left.as_ref() {
-                            Expression::IntExpr(left_expr) => {
+                            Expression::Integer(left_expr) => {
                                 assert_eq!(left_expr.token.literal(), expected_left);
                             }
                             _ => panic!("Expected left integer expression"),
                         }
 
                         match infix_expr.right.as_ref() {
-                            Expression::IntExpr(right_expr) => {
+                            Expression::Integer(right_expr) => {
                                 assert_eq!(right_expr.token.literal(), expected_right);
                             }
                             _ => panic!("Expected right integer expression"),
@@ -706,7 +706,7 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Fn(func_decl) => {
+            Statement::FunctionDeclaration(func_decl) => {
                 assert_eq!(func_decl.identifier.token.literal(), "add");
                 assert_eq!(func_decl.parameters.len(), 2);
                 assert_eq!(func_decl.parameters[0].token.literal(), "x");
@@ -725,9 +725,9 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Expr(expr_stmt) => {
+            Statement::ExpressionStatement(expr_stmt) => {
                 match expr_stmt.expression.as_ref() {
-                    Expression::FnExpr(func_expr) => {
+                    Expression::Function(func_expr) => {
                         assert_eq!(func_expr.parameters.len(), 2);
                         assert_eq!(func_expr.parameters[0].token.literal(), "x");
                         assert_eq!(func_expr.parameters[1].token.literal(), "y");
@@ -748,12 +748,12 @@ mod parser_tests {
         let statement = parse_first_statement(input).unwrap();
 
         match *statement {
-            Statement::Expr(expr_stmt) => {
+            Statement::ExpressionStatement(expr_stmt) => {
                 match expr_stmt.expression.as_ref() {
-                    Expression::CallExpr(call_expr) => {
+                    Expression::FunctionCall(call_expr) => {
                         // Check callee
                         match call_expr.function.as_ref() {
-                            Expression::IdentExpr(ident) => {
+                            Expression::Identifier(ident) => {
                                 assert_eq!(ident.token.literal(), "add");
                             }
                             _ => panic!("Expected identifier as function"),
@@ -764,7 +764,7 @@ mod parser_tests {
 
                         // First argument should be simple integer
                         match call_expr.arguments[0].as_ref() {
-                            Expression::IntExpr(int_expr) => {
+                            Expression::Integer(int_expr) => {
                                 assert_eq!(int_expr.token.literal(), "1");
                             }
                             _ => panic!("Expected first argument to be an integer"),
@@ -772,7 +772,7 @@ mod parser_tests {
 
                         // Second argument should be an infix expression
                         match call_expr.arguments[1].as_ref() {
-                            Expression::InfixedExpr(infix_expr) => {
+                            Expression::Infixed(infix_expr) => {
                                 assert_eq!(infix_expr.op.kind, TokenKind::Asterisk);
                             }
                             _ => panic!("Expected second argument to be an infix expression"),

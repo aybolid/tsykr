@@ -39,11 +39,11 @@ mod tests {
     #[test]
     fn test_expression_statement() {
         let token = Token::new(TokenKind::Minus, Position(0, 0));
-        let left = Box::new(Expression::new_int(Token::new(
+        let left = Box::new(Expression::new_integer(Token::new(
             TokenKind::Integer(42),
             Position(0, 0),
         )));
-        let right = Box::new(Expression::new_int(Token::new(
+        let right = Box::new(Expression::new_integer(Token::new(
             TokenKind::Integer(42),
             Position(0, 0),
         )));
