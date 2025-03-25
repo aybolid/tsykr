@@ -69,10 +69,10 @@ mod tests {
     #[test]
     fn test_integer_eval() {
         let token = Token::new(TokenKind::Integer(42), Position(0, 0));
-        let integer = Integer::new(token.clone());
+        let integer = Integer::new(token);
 
         let env = ExecutionEnvironment::new_global();
-        let result = integer.eval(Rc::clone(&env));
+        let result = integer.eval(env);
 
         assert!(result.is_ok());
         assert_eq!(result.unwrap(), Value::new_integer(42));

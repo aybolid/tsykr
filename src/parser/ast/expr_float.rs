@@ -1,5 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
-    eval::Eval,
+    eval::{Eval, EvalError, ExecutionEnvironment, Value},
     lexer::{Token, TokenKind},
 };
 
@@ -41,17 +43,20 @@ impl Node for Float {
 }
 
 impl Eval for Float {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, _env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        match self.token.kind {
+            TokenKind::Float(value) => Ok(Value::new_float(value)),
+            _ => unreachable!(),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::Position;
+    use crate::{
+        eval::{ExecutionEnvironment, Value},
+        lexer::Position,
+    };
 
     use super::*;
 
@@ -64,5 +69,17 @@ mod tests {
         assert_eq!(float.token, token);
         assert_eq!(float.to_string(), token.literal());
         assert_eq!(float.token_literal(), token.literal());
+    }
+
+    #[test]
+    fn test_float_eval() {
+        let token = Token::new(TokenKind::Float(3.22), Position(0, 0));
+        let float = Float::new(token);
+
+        let env = ExecutionEnvironment::new_global();
+        let result = float.eval(env);
+
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), Value::new_float(3.22));
     }
 }
