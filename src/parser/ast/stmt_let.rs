@@ -52,6 +52,11 @@ impl Node for LetStatement {
 impl Eval for LetStatement {
     fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
         let to_store = self.value.eval(Rc::clone(&env))?;
+
+        if to_store == VOID.rc() {
+            return Err(EvalError::TriedToStoreVoid(self.token.position));
+        }
+
         let name = self.identifier.token_literal();
 
         env.borrow_mut().set(name, to_store);

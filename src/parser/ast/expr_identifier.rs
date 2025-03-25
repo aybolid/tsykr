@@ -1,5 +1,7 @@
+use std::{cell::RefCell, rc::Rc};
+
 use crate::{
-    eval::Eval,
+    eval::{Environment, Eval, EvalError, ExecutionEnvironment, Value},
     lexer::{Token, TokenKind},
 };
 
@@ -39,17 +41,18 @@ impl Node for Identifier {
 }
 
 impl Eval for Identifier {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let name = self.token.literal();
+        match env.borrow().get(&name) {
+            Some(value) => Ok(value),
+            None => Err(EvalError::NotDefined(name, self.token.position)),
+        }
     }
 }
 
 #[cfg(test)]
 mod tests {
-    use crate::lexer::Position;
+    use crate::{eval::TRUE, lexer::Position};
 
     use super::*;
 
@@ -61,5 +64,18 @@ mod tests {
         assert_eq!(ident.token, token);
         assert_eq!(ident.to_string(), token.literal());
         assert_eq!(ident.token_literal(), token.literal());
+    }
+
+    #[test]
+    fn test_eval_identifier() {
+        let token = Token::new(TokenKind::Identifier("cool".to_string()), Position(0, 0));
+        let ident = Identifier::new(token.clone());
+
+        let env = ExecutionEnvironment::new_global();
+        env.borrow_mut().set(token.literal(), TRUE.rc());
+
+        let result = ident.eval(env);
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), TRUE.rc());
     }
 }
