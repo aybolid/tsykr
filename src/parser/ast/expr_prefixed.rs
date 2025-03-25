@@ -11,10 +11,11 @@ pub struct Prefixed {
 }
 
 impl Prefixed {
-    /// Creates a new prefixed node from a token.
-    /// Asserts that the token is either `Token::Bang` or `Token::Minus`.
     pub fn new(op: Token, right: Box<Expression>) -> Self {
-        assert!(op.kind == TokenKind::Bang || op.kind == TokenKind::Minus);
+        assert!(
+            op.kind == TokenKind::Bang || op.kind == TokenKind::Minus,
+            "expected bang or minus token"
+        );
 
         Self { op, right }
     }

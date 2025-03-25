@@ -10,8 +10,6 @@ pub struct ReturnStatement {
 }
 
 impl ReturnStatement {
-    /// Creates a new return statement node.
-    /// Asserts that the token is a `Token::Return`.
     pub fn new(token: Token, value: Box<Expression>) -> Self {
         assert_eq!(token.kind, TokenKind::Return, "expected return token");
         ReturnStatement { token, value }

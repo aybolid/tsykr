@@ -9,8 +9,6 @@ pub struct Identifier {
 }
 
 impl Identifier {
-    /// Creates a new identifier from a token.
-    /// Asserts that the token is a `Token::Identifier`.
     pub fn new(token: Token) -> Self {
         assert!(
             matches!(token.kind, TokenKind::Identifier(_)),

@@ -11,7 +11,11 @@ pub struct FunctionCall {
 
 impl FunctionCall {
     pub fn new(token: Token, function: Box<Expression>, arguments: Vec<Box<Expression>>) -> Self {
-        assert_eq!(token.kind, TokenKind::LeftParen);
+        assert_eq!(
+            token.kind,
+            TokenKind::LeftParen,
+            "expected left parenthesis token"
+        );
         Self {
             token,
             function,

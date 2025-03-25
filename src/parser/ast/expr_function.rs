@@ -10,7 +10,7 @@ pub struct FunctionExpression {
 
 impl FunctionExpression {
     pub fn new(token: Token, parameters: Vec<Identifier>, body: Block) -> Self {
-        assert_eq!(token.kind, TokenKind::Function);
+        assert_eq!(token.kind, TokenKind::Function, "expected function token");
         FunctionExpression {
             token,
             parameters,

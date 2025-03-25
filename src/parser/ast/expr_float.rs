@@ -37,31 +37,20 @@ impl Node for Float {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::lexer::Position;
+#[cfg(test)]
+mod tests {
+    use crate::lexer::Position;
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_float_node() {
-//         let token = Token::new(TokenKind::Float(2.23), Position(0, 0));
-//         let float = Float::new(token.clone());
+    #[test]
+    fn test_float_node() {
+        let token = Token::new(TokenKind::Float(2.23), Position(0, 0));
+        let float = Float::new(token.clone());
 
-//         assert!(float.as_any().is::<Float>());
-//         assert_eq!(float.token, token);
-//         assert_eq!(float.to_string(), token.literal());
-//         assert_eq!(float.token_literal(), token.literal());
-//     }
-
-//     #[test]
-//     fn test_float_eval() {
-//         let mut env = ExecEnvironment::new();
-//         let token = Token::new(TokenKind::Float(2.23), Position(0, 0));
-//         let float = Float::new(token.clone());
-
-//         let result = float.eval(&mut env).unwrap().unwrap();
-//         assert_eq!(*result, FloatObject::new_object(2.23));
-//         assert_eq!(result.inspect(), "2.23");
-//     }
-// }
+        assert!(float.as_any().is::<Float>());
+        assert_eq!(float.token, token);
+        assert_eq!(float.to_string(), token.literal());
+        assert_eq!(float.token_literal(), token.literal());
+    }
+}

@@ -9,9 +9,6 @@ pub struct Block {
 }
 
 impl Block {
-    /// Creates a new block statement.
-    ///
-    /// Asserts that the `token` is a `Token::LeftCurly`.
     pub fn new(token: Token, statements: Vec<Box<Statement>>) -> Self {
         assert_eq!(token.kind, TokenKind::LeftCurly);
         Block { token, statements }

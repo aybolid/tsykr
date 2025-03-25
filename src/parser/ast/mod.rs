@@ -50,6 +50,28 @@ pub enum Statement {
     Fn(FunctionDeclaration),
 }
 
+impl Node for Statement {
+    fn token_literal(&self) -> String {
+        match self {
+            Statement::BlockStatement(block) => block.token_literal(),
+            Statement::Expr(expr_stmt) => expr_stmt.token_literal(),
+            Statement::Let(let_stmt) => let_stmt.token_literal(),
+            Statement::Return(return_stmt) => return_stmt.token_literal(),
+            Statement::Fn(func_decl) => func_decl.token_literal(),
+        }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        match self {
+            Statement::BlockStatement(block) => block,
+            Statement::Expr(expr_stmt) => expr_stmt,
+            Statement::Let(let_stmt) => let_stmt,
+            Statement::Return(return_stmt) => return_stmt,
+            Statement::Fn(func_decl) => func_decl,
+        }
+    }
+}
+
 impl ToString for Statement {
     fn to_string(&self) -> String {
         match self {
@@ -72,6 +94,34 @@ pub enum Expression {
     InfixedExpr(Infixed),
     IntExpr(Integer),
     PrefixedExpr(Prefixed),
+}
+
+impl Node for Expression {
+    fn token_literal(&self) -> String {
+        match self {
+            Expression::BooleanExpr(boolean) => boolean.token_literal(),
+            Expression::CallExpr(call) => call.token_literal(),
+            Expression::FloatExpr(float) => float.token_literal(),
+            Expression::FnExpr(func) => func.token_literal(),
+            Expression::IdentExpr(ident) => ident.token_literal(),
+            Expression::InfixedExpr(infix) => infix.token_literal(),
+            Expression::IntExpr(int) => int.token_literal(),
+            Expression::PrefixedExpr(prefix) => prefix.token_literal(),
+        }
+    }
+
+    fn as_any(&self) -> &dyn std::any::Any {
+        match self {
+            Expression::BooleanExpr(boolean) => boolean,
+            Expression::CallExpr(call) => call,
+            Expression::FloatExpr(float) => float,
+            Expression::FnExpr(func) => func,
+            Expression::IdentExpr(ident) => ident,
+            Expression::InfixedExpr(infix) => infix,
+            Expression::IntExpr(int) => int,
+            Expression::PrefixedExpr(prefix) => prefix,
+        }
+    }
 }
 
 impl ToString for Expression {

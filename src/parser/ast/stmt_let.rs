@@ -11,8 +11,6 @@ pub struct LetStatement {
 }
 
 impl LetStatement {
-    /// Creates a let statement node.
-    /// Asserts that the token is a `Token::Let`.
     pub fn new(token: Token, identifier: Identifier, value: Box<Expression>) -> Self {
         assert_eq!(token.kind, TokenKind::Let, "expected let token");
         LetStatement {

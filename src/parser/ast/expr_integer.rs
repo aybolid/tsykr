@@ -9,8 +9,6 @@ pub struct Integer {
 }
 
 impl Integer {
-    /// Creates a new integer node from a token.
-    /// Asserts that the token is a `Token::Integer`.
     pub fn new(token: Token) -> Self {
         assert!(
             matches!(token.kind, TokenKind::Integer(_)),

@@ -9,11 +9,11 @@ pub struct Boolean {
 }
 
 impl Boolean {
-    /// Creates a new boolean node from a token.
-    /// Asserts that the token is either `Token::True` or `Token::False`.
     pub fn new(token: Token) -> Self {
-        assert!(token.kind == TokenKind::True || token.kind == TokenKind::False);
-
+        assert!(
+            token.kind == TokenKind::True || token.kind == TokenKind::False,
+            "expected true or false token"
+        );
         Self { token }
     }
 }

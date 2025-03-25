@@ -12,7 +12,6 @@ pub struct Infixed {
 }
 
 impl Infixed {
-    /// Creates a new infixed node from a token.
     pub fn new(op: Token, left: Box<Expression>, right: Box<Expression>) -> Self {
         Self { op, left, right }
     }

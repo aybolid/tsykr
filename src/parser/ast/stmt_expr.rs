@@ -10,7 +10,6 @@ pub struct ExpressionStatement {
 }
 
 impl ExpressionStatement {
-    /// Creates a expression statement node.
     pub fn new(token: Token, expression: Box<Expression>) -> Self {
         Self { token, expression }
     }
