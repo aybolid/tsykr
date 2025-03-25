@@ -51,34 +51,34 @@ impl Node for FunctionCall {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{
-//         lexer::Position,
-//         parser::{Identifier, Integer},
-//     };
+#[cfg(test)]
+mod tests {
+    use crate::{
+        lexer::Position,
+        parser::{Identifier, Integer},
+    };
 
-//     use super::*;
+    use super::*;
 
-//     #[test]
-//     fn test_function_call() {
-//         let call = FunctionCall::new(
-//             Token::new(TokenKind::LeftParen, Position(0, 0)),
-//             Box::new(Identifier::new(Token::new(
-//                 TokenKind::Identifier("my_func".to_string()),
-//                 Position(0, 0),
-//             ))),
-//             vec![Box::new(Integer::new(Token::new(
-//                 TokenKind::Integer(42),
-//                 Position(0, 0),
-//             )))],
-//         );
+    #[test]
+    fn test_function_call() {
+        let call = FunctionCall::new(
+            Token::new(TokenKind::LeftParen, Position(0, 0)),
+            Box::new(Expression::IdentExpr(Identifier::new(Token::new(
+                TokenKind::Identifier("my_func".to_string()),
+                Position(0, 0),
+            )))),
+            vec![Box::new(Expression::IntExpr(Integer::new(Token::new(
+                TokenKind::Integer(42),
+                Position(0, 0),
+            ))))],
+        );
 
-//         assert!(call.as_any().is::<FunctionCall>());
-//         assert_eq!(call.function.to_string(), "my_func");
-//         assert_eq!(call.token_literal(), "(");
-//         assert_eq!(call.arguments.len(), 1);
-//         assert_eq!(call.arguments[0].to_string(), "42");
-//         assert_eq!(call.to_string(), "my_func(42)");
-//     }
-// }
+        assert!(call.as_any().is::<FunctionCall>());
+        assert_eq!(call.function.to_string(), "my_func");
+        assert_eq!(call.token_literal(), "(");
+        assert_eq!(call.arguments.len(), 1);
+        assert_eq!(call.arguments[0].to_string(), "42");
+        assert_eq!(call.to_string(), "my_func(42)");
+    }
+}
