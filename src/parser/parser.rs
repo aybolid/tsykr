@@ -510,396 +510,299 @@ impl Parser {
     }
 }
 
-// #[cfg(test)]
-// mod tests {
-//     use crate::{lexer::Position, parser::Node};
+#[cfg(test)]
+mod parser_tests {
+    use super::*;
 
-//     use super::*;
+    /// Helper function to create a simple lexer from a string input
+    fn create_lexer(input: &str) -> Lexer {
+        Lexer::new(input.to_string())
+    }
 
-//     #[test]
-//     fn test_new_parser() {
-//         let lexer = Lexer::new("let".to_string());
-//         let parser = Parser::new(lexer);
-//         assert_eq!(
-//             parser.current_token,
-//             Some(Token::new(TokenKind::Let, Position(1, 1)))
-//         )
-//     }
+    /// Helper function to parse and extract the first statement
+    fn parse_first_statement(input: &str) -> Result<Box<Statement>, Vec<ParserError>> {
+        let lexer = create_lexer(input);
+        let mut parser = Parser::new(lexer);
+        let program = parser.parse()?;
+        Ok(program.statements.into_iter().next().unwrap())
+    }
 
-//     #[test]
-//     fn test_next_token() {
-//         let lexer = Lexer::new("let x = 5".to_string());
-//         let mut parser = Parser::new(lexer);
-//         parser.next_token();
-//         assert_eq!(
-//             parser.current_token,
-//             Some(Token::new(
-//                 TokenKind::Identifier("x".to_string()),
-//                 Position(1, 5)
-//             ))
-//         );
-//         parser.next_token();
-//         assert_eq!(
-//             parser.current_token,
-//             Some(Token::new(TokenKind::Equals, Position(1, 7)))
-//         );
-//         parser.next_token();
-//         assert_eq!(
-//             parser.current_token,
-//             Some(Token::new(TokenKind::Integer(5), Position(1, 9)))
-//         );
-//         parser.next_token();
-//         assert_eq!(parser.current_token, None);
-//     }
+    #[test]
+    fn test_let_statement_parsing() {
+        let input = "let x = 5;";
+        let statement = parse_first_statement(input).unwrap();
 
-//     #[test]
-//     fn test_expect_peek_token() {
-//         let lexer = Lexer::new("let x = 5".to_string());
-//         let mut parser = Parser::new(lexer);
+        match *statement {
+            Statement::Let(let_stmt) => {
+                assert_eq!(let_stmt.identifier.token.literal(), "x");
 
-//         println!("{parser:?}");
+                match let_stmt.value.as_ref() {
+                    Expression::IntExpr(int_expr) => {
+                        assert_eq!(int_expr.token.literal(), "5");
+                    }
+                    _ => panic!("Expected integer expression"),
+                }
+            }
+            _ => panic!("Expected let statement"),
+        }
+    }
 
-//         parser
-//             .expect_token_fn(&parser.peek_token, |token| {
-//                 matches!(token.kind, TokenKind::Identifier(_))
-//             })
-//             .unwrap();
-//         assert_eq!(
-//             parser.peek_token,
-//             Some(Token::new(
-//                 TokenKind::Identifier("x".to_string()),
-//                 Position(1, 5)
-//             ))
-//         );
-//         parser.next_token();
+    #[test]
+    fn test_return_statement_parsing() {
+        let input = "return 5;";
+        let statement = parse_first_statement(input).unwrap();
 
-//         parser
-//             .expect_token_kind(&parser.peek_token, TokenKind::Equals)
-//             .unwrap();
-//         assert_eq!(
-//             parser.peek_token,
-//             Some(Token::new(TokenKind::Equals, Position(1, 7)))
-//         );
-//         parser.next_token();
+        match *statement {
+            Statement::Return(return_stmt) => match return_stmt.value.as_ref() {
+                Expression::IntExpr(int_expr) => {
+                    assert_eq!(int_expr.token.literal(), "5");
+                }
+                _ => panic!("Expected integer expression"),
+            },
+            _ => panic!("Expected return statement"),
+        }
+    }
 
-//         parser
-//             .expect_token_fn(&parser.peek_token, |token| {
-//                 matches!(token.kind, TokenKind::Integer(_))
-//             })
-//             .unwrap();
-//         assert_eq!(
-//             parser.peek_token,
-//             Some(Token::new(TokenKind::Integer(5), Position(1, 9)))
-//         );
-//         if let Ok(()) = parser.expect_token_kind(&parser.peek_token, TokenKind::If) {
-//             panic!("expect_next_token should fail at this point");
-//         }
-//     }
+    #[test]
+    fn test_identifier_expression() {
+        let input = "foobar;";
+        let statement = parse_first_statement(input).unwrap();
 
-//     #[test]
-//     fn test_parse_function_call_expression() {
-//         let lexer = Lexer::new("(1, 2)".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let call = parser
-//             .parse_function_call(Box::new(Identifier::new(Token::new(
-//                 TokenKind::Identifier("foo".to_string()),
-//                 Position(1, 1),
-//             ))))
-//             .unwrap();
+        match *statement {
+            Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::IdentExpr(ident) => {
+                    assert_eq!(ident.token.literal(), "foobar");
+                }
+                _ => panic!("Expected identifier expression"),
+            },
+            _ => panic!("Expected expression statement"),
+        }
+    }
 
-//         assert!(call.as_any().is::<FunctionCall>());
-//         assert_eq!(call.function.to_string(), "foo");
-//         assert_eq!(call.arguments.len(), 2);
-//         assert_eq!(call.arguments[0].to_string(), "1");
-//         assert_eq!(call.arguments[1].to_string(), "2");
-//     }
+    #[test]
+    fn test_integer_literal_expression() {
+        let input = "5;";
+        let statement = parse_first_statement(input).unwrap();
 
-//     #[test]
-//     fn test_parse_function_expression() {
-//         let lexer = Lexer::new("fn (a) { return a }".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let func = parser.parse_function_expression().unwrap();
+        match *statement {
+            Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::IntExpr(int_expr) => {
+                    assert_eq!(int_expr.token.literal(), "5");
+                }
+                _ => panic!("Expected integer expression"),
+            },
+            _ => panic!("Expected expression statement"),
+        }
+    }
 
-//         assert!(func.as_any().is::<FunctionExpression>());
-//         assert_eq!(func.token, Token::new(TokenKind::Function, Position(1, 1)));
-//         assert_eq!(func.parameters.len(), 1);
-//         assert_eq!(func.parameters[0].to_string(), "a");
-//         assert_eq!(func.body.statements.len(), 1);
-//         assert_eq!(func.body.to_string(), "{\n  return a\n}")
-//     }
+    #[test]
+    fn test_float_literal_expression() {
+        let input = "5.5;";
+        let statement = parse_first_statement(input).unwrap();
 
-//     #[test]
-//     fn test_parse_function_declaration_statement() {
-//         let lexer = Lexer::new("fn foo(x, y) { return x + y; }".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let func = parser.parse_function_declaration_statement().unwrap();
+        match *statement {
+            Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::FloatExpr(float_expr) => {
+                    assert_eq!(float_expr.token.literal(), "5.5");
+                }
+                _ => panic!("Expected float expression"),
+            },
+            _ => panic!("Expected expression statement"),
+        }
+    }
 
-//         assert_eq!(func.token, Token::new(TokenKind::Function, Position(1, 1)));
-//         assert_eq!(func.identifier.to_string(), "foo");
-//         assert_eq!(func.parameters.len(), 2);
-//         assert_eq!(func.parameters[0].to_string(), "x");
-//         assert_eq!(func.parameters[1].to_string(), "y");
-//         assert_eq!(func.body.statements.len(), 1);
-//         assert_eq!(func.body.to_string(), "{\n  return (x+y)\n}")
-//     }
+    #[test]
+    fn test_boolean_expressions() {
+        let inputs = vec!["true;", "false;"];
 
-//     #[test]
-//     fn test_parse_function_parameters() {
-//         let lexer = Lexer::new("(a, b)".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let params = parser.parse_function_parameters().unwrap();
+        for input in inputs {
+            let statement = parse_first_statement(input).unwrap();
 
-//         assert_eq!(params.len(), 2);
-//         assert_eq!(params[0].to_string(), "a");
-//         assert_eq!(params[1].to_string(), "b");
-//     }
+            match *statement {
+                Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
+                    Expression::BooleanExpr(bool_expr) => {
+                        assert_eq!(bool_expr.token.literal(), input.trim_end_matches(';'));
+                    }
+                    _ => panic!("Expected boolean expression"),
+                },
+                _ => panic!("Expected expression statement"),
+            }
+        }
+    }
 
-//     #[test]
-//     fn test_parse_block_statement() {
-//         let lexer = Lexer::new("{ 5; ident; }".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let block = parser.parse_block_statement().unwrap();
+    #[test]
+    fn test_prefix_expressions() {
+        let inputs = vec![
+            ("!5;", TokenKind::Bang, "5"),
+            ("-15;", TokenKind::Minus, "15"),
+        ];
 
-//         assert_eq!(block.statements.len(), 2);
+        for (input, expected_prefix, expected_value) in inputs {
+            let statement = parse_first_statement(input).unwrap();
 
-//         let int_expr = block.statements[0]
-//             .as_any()
-//             .downcast_ref::<ExpressionStatement>()
-//             .unwrap()
-//             .expression
-//             .as_any()
-//             .downcast_ref::<Integer>()
-//             .unwrap();
-//         assert_eq!(int_expr.to_string(), "5");
+            match *statement {
+                Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
+                    Expression::PrefixedExpr(prefix_expr) => {
+                        assert_eq!(prefix_expr.op.kind, expected_prefix);
+                        match prefix_expr.right.as_ref() {
+                            Expression::IntExpr(int_expr) => {
+                                assert_eq!(int_expr.token.literal(), expected_value);
+                            }
+                            _ => panic!("Expected integer expression"),
+                        }
+                    }
+                    _ => panic!("Expected prefixed expression"),
+                },
+                _ => panic!("Expected expression statement"),
+            }
+        }
+    }
 
-//         let ident_expr = block.statements[1]
-//             .as_any()
-//             .downcast_ref::<ExpressionStatement>()
-//             .unwrap()
-//             .expression
-//             .as_any()
-//             .downcast_ref::<Identifier>()
-//             .unwrap();
-//         assert_eq!(ident_expr.to_string(), "ident");
-//     }
+    #[test]
+    fn test_infix_expressions() {
+        let inputs = vec![
+            ("5 + 5;", "5", TokenKind::Plus, "5"),
+            ("5 - 5;", "5", TokenKind::Minus, "5"),
+            ("5 * 5;", "5", TokenKind::Asterisk, "5"),
+            ("5 / 5;", "5", TokenKind::Slash, "5"),
+            ("5 > 5;", "5", TokenKind::GreaterThan, "5"),
+            ("5 < 5;", "5", TokenKind::LessThan, "5"),
+            ("5 == 5;", "5", TokenKind::EqualsEquals, "5"),
+            ("5 != 5;", "5", TokenKind::BangEquals, "5"),
+        ];
 
-//     #[test]
-//     fn test_parse_grouped() {
-//         let lexer = Lexer::new("let x = (2 + 2) * 2;".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let program = parser.parse().unwrap();
-//         assert_eq!(program.to_string(), "let x = ((2+2)*2)");
-//     }
+        for (input, expected_left, expected_op, expected_right) in inputs {
+            let statement = parse_first_statement(input).unwrap();
 
-//     #[test]
-//     fn test_parse_infixed() {
-//         let lexer = Lexer::new("6 + 2".to_string());
-//         let mut parser = Parser::new(lexer);
+            match *statement {
+                Statement::Expr(expr_stmt) => match expr_stmt.expression.as_ref() {
+                    Expression::InfixedExpr(infix_expr) => {
+                        assert_eq!(infix_expr.op.kind, expected_op);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             if let Some(infix_expr) = expr_stmt.expression.as_any().downcast_ref::<Infixed>() {
-//                 assert_eq!(infix_expr.left.token_literal(), "6");
-//                 assert_eq!(infix_expr.op, Token::new(TokenKind::Plus, Position(1, 3)));
-//                 assert_eq!(infix_expr.right.token_literal(), "2");
-//             } else {
-//                 panic!("expected Infix node");
-//             }
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+                        match infix_expr.left.as_ref() {
+                            Expression::IntExpr(left_expr) => {
+                                assert_eq!(left_expr.token.literal(), expected_left);
+                            }
+                            _ => panic!("Expected left integer expression"),
+                        }
 
-//     #[test]
-//     fn test_parse_prefixed() {
-//         let lexer = Lexer::new("-5 !true".to_string());
-//         let mut parser = Parser::new(lexer);
+                        match infix_expr.right.as_ref() {
+                            Expression::IntExpr(right_expr) => {
+                                assert_eq!(right_expr.token.literal(), expected_right);
+                            }
+                            _ => panic!("Expected right integer expression"),
+                        }
+                    }
+                    _ => panic!("Expected infixed expression"),
+                },
+                _ => panic!("Expected expression statement"),
+            }
+        }
+    }
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
-//                 assert_eq!(prefix_expr.op, Token::new(TokenKind::Minus, Position(1, 1)));
-//                 assert_eq!(prefix_expr.right.token_literal(), "5");
-//             } else {
-//                 panic!("expected Prefixed node");
-//             }
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+    #[test]
+    fn test_function_declaration() {
+        let input = "fn add(x, y) { x + y; }";
+        let statement = parse_first_statement(input).unwrap();
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             if let Some(prefix_expr) = expr_stmt.expression.as_any().downcast_ref::<Prefixed>() {
-//                 assert_eq!(prefix_expr.op, Token::new(TokenKind::Bang, Position(1, 4)));
-//                 assert_eq!(prefix_expr.right.token_literal(), "true");
-//             } else {
-//                 panic!("expected Prefixed node");
-//             }
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        match *statement {
+            Statement::Fn(func_decl) => {
+                assert_eq!(func_decl.identifier.token.literal(), "add");
+                assert_eq!(func_decl.parameters.len(), 2);
+                assert_eq!(func_decl.parameters[0].token.literal(), "x");
+                assert_eq!(func_decl.parameters[1].token.literal(), "y");
 
-//     #[test]
-//     fn test_parse_boolean() {
-//         let lexer = Lexer::new("true false".to_string());
-//         let mut parser = Parser::new(lexer);
+                // Verify body statements
+                assert_eq!(func_decl.body.statements.len(), 1);
+            }
+            _ => panic!("Expected function declaration"),
+        }
+    }
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "true");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+    #[test]
+    fn test_function_expression() {
+        let input = "fn(x, y) { x + y; };";
+        let statement = parse_first_statement(input).unwrap();
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "false");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        match *statement {
+            Statement::Expr(expr_stmt) => {
+                match expr_stmt.expression.as_ref() {
+                    Expression::FnExpr(func_expr) => {
+                        assert_eq!(func_expr.parameters.len(), 2);
+                        assert_eq!(func_expr.parameters[0].token.literal(), "x");
+                        assert_eq!(func_expr.parameters[1].token.literal(), "y");
 
-//     #[test]
-//     fn test_parse_float() {
-//         let lexer = Lexer::new("3.14 32.00878".to_string());
-//         let mut parser = Parser::new(lexer);
+                        // Verify body statements
+                        assert_eq!(func_expr.body.statements.len(), 1);
+                    }
+                    _ => panic!("Expected function expression"),
+                }
+            }
+            _ => panic!("Expected expression statement"),
+        }
+    }
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "3.14");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+    #[test]
+    fn test_function_call() {
+        let input = "add(1, 2 * 3);";
+        let statement = parse_first_statement(input).unwrap();
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "32.00878");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+        match *statement {
+            Statement::Expr(expr_stmt) => {
+                match expr_stmt.expression.as_ref() {
+                    Expression::CallExpr(call_expr) => {
+                        // Check callee
+                        match call_expr.function.as_ref() {
+                            Expression::IdentExpr(ident) => {
+                                assert_eq!(ident.token.literal(), "add");
+                            }
+                            _ => panic!("Expected identifier as function"),
+                        }
 
-//     #[test]
-//     fn test_parse_integer() {
-//         let lexer = Lexer::new("5 009".to_string());
-//         let mut parser = Parser::new(lexer);
+                        // Check arguments
+                        assert_eq!(call_expr.arguments.len(), 2);
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "5");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+                        // First argument should be simple integer
+                        match call_expr.arguments[0].as_ref() {
+                            Expression::IntExpr(int_expr) => {
+                                assert_eq!(int_expr.token.literal(), "1");
+                            }
+                            _ => panic!("Expected first argument to be an integer"),
+                        }
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "9");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
+                        // Second argument should be an infix expression
+                        match call_expr.arguments[1].as_ref() {
+                            Expression::InfixedExpr(infix_expr) => {
+                                assert_eq!(infix_expr.op.kind, TokenKind::Asterisk);
+                            }
+                            _ => panic!("Expected second argument to be an infix expression"),
+                        }
+                    }
+                    _ => panic!("Expected function call expression"),
+                }
+            }
+            _ => panic!("Expected expression statement"),
+        }
+    }
 
-//     #[test]
-//     fn test_parse_identifier() {
-//         let lexer = Lexer::new("name variable".to_string());
-//         let mut parser = Parser::new(lexer);
+    #[test]
+    fn test_parsing_error_handling() {
+        let inputs = vec![
+            "let x = ;", // Missing value
+            "let = 5;",  // Missing identifier
+            "return;",   // Missing return value
+        ];
 
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "name");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
+        for input in inputs {
+            let lexer = create_lexer(input);
+            let mut parser = Parser::new(lexer);
+            let result = parser.parse();
 
-//         parser.next_token();
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(expr_stmt) = stmt.as_any().downcast_ref::<ExpressionStatement>() {
-//             assert_eq!(expr_stmt.expression.token_literal(), "variable");
-//         } else {
-//             panic!("expected ExpressionStatement node");
-//         }
-//     }
-
-//     #[test]
-//     fn test_parse_let_statement() {
-//         let lexer = Lexer::new("let x = 5;".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(let_stmt) = stmt.as_any().downcast_ref::<LetStatement>() {
-//             assert_eq!(let_stmt.token.kind, TokenKind::Let);
-//             assert_eq!(let_stmt.value.to_string(), "5")
-//         } else {
-//             panic!("expected LetStatement node");
-//         }
-//     }
-
-//     #[test]
-//     fn test_parse_return_statement() {
-//         let lexer = Lexer::new("return 5;".to_string());
-//         let mut parser = Parser::new(lexer);
-//         let stmt = parser.parse_statement().unwrap();
-//         if let Some(return_stmt) = stmt.as_any().downcast_ref::<ReturnStatement>() {
-//             assert_eq!(return_stmt.token.kind, TokenKind::Return);
-//             assert_eq!(return_stmt.value.to_string(), "5")
-//         } else {
-//             panic!("expected ReturnStatement node");
-//         }
-//     }
-
-//     #[test]
-//     fn test_parser_errors() {
-//         let lexer = Lexer::new("№".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(
-//                     errors[0],
-//                     ParserError::InvalidToken(Token::new(TokenKind::ILLEGAL('№'), Position(1, 1)))
-//                 )
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-
-//         let lexer = Lexer::new("let".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(errors[0], ParserError::UnexpectedEOF)
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-
-//         let lexer = Lexer::new("let 13".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(
-//                     errors[0],
-//                     ParserError::InvalidToken(Token::new(TokenKind::Integer(13), Position(1, 5)))
-//                 )
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-
-//         let lexer = Lexer::new("let what".to_string());
-//         let mut parser = Parser::new(lexer);
-//         match parser.parse() {
-//             Err(errors) => {
-//                 assert_eq!(errors.len(), 1);
-//                 assert_eq!(
-//                     errors[0],
-//                     ParserError::UnexpectedEOFWithExpectation(TokenKind::Equals)
-//                 )
-//             }
-//             _ => panic!("expected to fail"),
-//         };
-//     }
-// }
+            assert!(
+                result.is_err(),
+                "Expected parsing to fail for input: {}",
+                input
+            );
+        }
+    }
+}
