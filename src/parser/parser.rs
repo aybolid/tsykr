@@ -262,6 +262,7 @@ impl Parser {
                 TokenKind::True | TokenKind::False => Box::new(self.parse_boolean()?),
                 TokenKind::Bang | TokenKind::Minus => Box::new(self.parse_prefixed_expression()?),
                 TokenKind::Function => Box::new(self.parse_function_expression()?),
+                TokenKind::String(_) => Box::new(self.parse_string_literal()?),
 
                 TokenKind::LeftParen => self.parse_grouped_expression()?,
 
@@ -299,6 +300,17 @@ impl Parser {
         }
 
         Ok(expr)
+    }
+
+    /// Parser a string literal
+    fn parse_string_literal(&mut self) -> Result<Expression, ParserError> {
+        self.expect_token_fn(&self.current_token, |t| {
+            matches!(t.kind, TokenKind::String(_))
+        })?;
+
+        Ok(Expression::new_string(
+            self.current_token.take().expect("checked before"),
+        ))
     }
 
     /// Parses a function call expression.
@@ -559,6 +571,24 @@ mod parser_tests {
         let mut parser = Parser::new(lexer);
         let program = parser.parse()?;
         Ok(program.statements.into_iter().next().unwrap())
+    }
+
+    #[test]
+    fn test_string_literal_expression() {
+        let input = "\"what\";";
+        let statement = parse_first_statement(input).unwrap();
+
+        println!("{statement:?}");
+
+        match *statement {
+            Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::String(str_expr) => {
+                    assert_eq!(str_expr.token.literal(), "what");
+                }
+                _ => panic!("Expected string expression"),
+            },
+            _ => panic!("Expected expression statement"),
+        }
     }
 
     #[test]

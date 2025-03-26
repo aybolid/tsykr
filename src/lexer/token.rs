@@ -30,6 +30,7 @@ pub enum TokenKind {
     Identifier(String),
     Integer(i64),
     Float(f64),
+    String(String),
 
     True,
     False,
@@ -90,6 +91,7 @@ impl TokenKind {
             Self::Identifier(str) => str.clone(),
             Self::Integer(integer) => integer.to_string(),
             Self::Float(float) => float.to_string(),
+            Self::String(string) => string.to_string(),
 
             Self::True => "true".to_string(),
             Self::False => "false".to_string(),

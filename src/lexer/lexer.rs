@@ -106,6 +106,27 @@ impl Lexer {
         }
     }
 
+    fn read_string(&mut self) -> Token {
+        let token_position = self.position;
+
+        let mut buf = String::new();
+        self.read_char();
+
+        while self.current_ch.is_some()
+            && self.current_ch != Some('"')
+            && self.current_ch != Some('\n')
+        {
+            buf.push(self.current_ch.unwrap());
+            self.read_char();
+        }
+
+        if self.current_ch == Some('"') {
+            self.read_char();
+        }
+
+        Token::new(TokenKind::String(buf), token_position)
+    }
+
     /// Checks if the current character is an alphabetic character or an underscore.
     fn current_is_alphabetic(&self) -> bool {
         match self.current_ch {
@@ -195,6 +216,7 @@ impl Iterator for Lexer {
                 }
             }
 
+            '"' => return Some(self.read_string()),
             _ if self.current_is_alphabetic() => return Some(self.read_alphabetic_token()),
             _ if self.current_is_numeric() => return Some(self.read_numeric_token()),
 

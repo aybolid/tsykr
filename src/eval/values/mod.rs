@@ -18,6 +18,7 @@ pub enum Value {
     Float(f64),
     Boolean(bool),
     Function(Function),
+    String(String),
 
     Returned(Rc<Value>),
 
@@ -25,6 +26,9 @@ pub enum Value {
 }
 
 impl Value {
+    pub fn new_string(value: String) -> Rc<Self> {
+        Rc::new(Value::String(value))
+    }
     pub fn new_integer(value: i64) -> Rc<Self> {
         Rc::new(Value::Integer(value))
     }
@@ -85,6 +89,7 @@ impl ToString for Value {
             Value::Float(value) => value.to_string(),
             Value::Boolean(value) => value.to_string(),
             Value::Returned(value) => value.to_string(),
+            Value::String(value) => value.to_string(),
             Value::Function(func) => {
                 format!("fn({})", func.params.join(", "))
             }

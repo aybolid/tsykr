@@ -6,6 +6,7 @@ mod expr_identifier;
 mod expr_infixed;
 mod expr_integer;
 mod expr_prefixed;
+mod expr_string;
 mod program;
 mod stmt_block;
 mod stmt_condition;
@@ -24,6 +25,7 @@ pub use expr_identifier::*;
 pub use expr_infixed::*;
 pub use expr_integer::*;
 pub use expr_prefixed::*;
+pub use expr_string::*;
 pub use program::*;
 pub use stmt_block::*;
 pub use stmt_condition::*;
@@ -155,6 +157,7 @@ pub enum Expression {
     Infixed(Infixed),
     Integer(Integer),
     Prefixed(Prefixed),
+    String(StringLiteral),
 }
 
 impl Expression {
@@ -186,6 +189,9 @@ impl Expression {
     pub fn new_infixed(op_token: Token, left: Box<Expression>, right: Box<Expression>) -> Self {
         Expression::Infixed(Infixed::new(op_token, left, right))
     }
+    pub fn new_string(token: Token) -> Self {
+        Expression::String(StringLiteral::new(token))
+    }
 }
 
 impl Eval for Expression {
@@ -199,6 +205,7 @@ impl Eval for Expression {
             Expression::Infixed(infix) => infix.eval(env),
             Expression::Integer(int) => int.eval(env),
             Expression::Prefixed(prefix) => prefix.eval(env),
+            Expression::String(string) => string.eval(env),
         }
     }
 }
@@ -214,6 +221,7 @@ impl Node for Expression {
             Expression::Infixed(infix) => infix.token_literal(),
             Expression::Integer(int) => int.token_literal(),
             Expression::Prefixed(prefix) => prefix.token_literal(),
+            Expression::String(string) => string.token_literal(),
         }
     }
 
@@ -227,6 +235,7 @@ impl Node for Expression {
             Expression::Infixed(infix) => infix,
             Expression::Integer(int) => int,
             Expression::Prefixed(prefix) => prefix,
+            Expression::String(string) => string,
         }
     }
 }
@@ -242,6 +251,7 @@ impl ToString for Expression {
             Expression::Infixed(infix) => infix.to_string(),
             Expression::Integer(int) => int.to_string(),
             Expression::Prefixed(prefix) => prefix.to_string(),
+            Expression::String(string) => string.to_string(),
         }
     }
 }
