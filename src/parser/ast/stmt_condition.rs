@@ -66,3 +66,22 @@ impl Eval for ConditionStatement {
         todo!()
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::lexer::Position;
+
+    #[test]
+    fn test_condition_statement() {
+        let token = Token::new(TokenKind::If, Position(0, 0));
+        let cond = Expression::new_boolean(Token::new(TokenKind::True, Position(0, 0)));
+
+        let if_true = Block::new(Token::new(TokenKind::LeftCurly, Position(0, 0)), vec![]);
+
+        let stmt = ConditionStatement::new(token.clone(), Box::new(cond), if_true, None);
+
+        assert_eq!(stmt.token_literal(), token.literal());
+        assert_eq!(stmt.to_string(), "if (true) {\n}");
+    }
+}
