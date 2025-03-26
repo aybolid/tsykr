@@ -574,6 +574,18 @@ mod parser_tests {
             }
             _ => panic!("Expected condition statement"),
         }
+
+        let input = "if (true) { 2 }";
+        let statement = parse_first_statement(input).unwrap();
+
+        match *statement {
+            Statement::Condition(cond) => {
+                assert_eq!(cond.condition.to_string(), "true");
+                assert_eq!(cond.if_true.statements.len(), 1);
+                assert!(cond.if_false.is_none());
+            }
+            _ => panic!("Expected condition statement"),
+        }
     }
 
     #[test]
