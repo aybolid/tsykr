@@ -23,6 +23,16 @@ pub fn run() {
 
         stdin.read_line(&mut buf).unwrap();
 
+        if buf == "\n" {
+            continue;
+        }
+
+        if buf == "?\n" {
+            println!("{:?}", env.as_ptr());
+            println!("{:#?}", env.borrow());
+            continue;
+        }
+
         let mut debug_print = false;
         if buf.starts_with("?") {
             debug_print = true;
