@@ -79,12 +79,46 @@ impl Parser {
                 {
                     Ok(Box::new(self.parse_function_declaration_statement()?))
                 }
+                TokenKind::If => Ok(Box::new(self.parse_condition_statement()?)),
+
                 TokenKind::ILLEGAL(_) => Err(ParserError::InvalidToken(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
             }
         } else {
             Err(ParserError::UnexpectedEOF)
         }
+    }
+
+    fn parse_condition_statement(&mut self) -> Result<Statement, ParserError> {
+        self.expect_token_kind(&self.current_token, TokenKind::If)?;
+        let if_token = self.current_token.take().expect("checked before");
+        self.next_token();
+
+        let condition = self.parse_grouped_expression()?;
+        self.next_token();
+
+        let then_block = match self.parse_block_statement()? {
+            Statement::Block(block) => block,
+            _ => unreachable!(),
+        };
+
+        self.next_token();
+
+        let else_block = if self.current_token.is_some()
+            && self.current_token.as_ref().expect("checked before").kind == TokenKind::Else
+        {
+            self.next_token();
+            Some(match self.parse_block_statement()? {
+                Statement::Block(block) => block,
+                _ => unreachable!(),
+            })
+        } else {
+            None
+        };
+
+        Ok(Statement::new_condition(
+            if_token, condition, then_block, else_block,
+        ))
     }
 
     /// Parses a function declaration statement.
@@ -524,6 +558,22 @@ mod parser_tests {
         let mut parser = Parser::new(lexer);
         let program = parser.parse()?;
         Ok(program.statements.into_iter().next().unwrap())
+    }
+
+    #[test]
+    fn test_condition_statement_parsing() {
+        let input = "if (true) { 2 } else { 4; 2 + 2 }";
+        let statement = parse_first_statement(input).unwrap();
+
+        match *statement {
+            Statement::Condition(cond) => {
+                assert_eq!(cond.condition.to_string(), "true");
+                assert_eq!(cond.if_true.statements.len(), 1);
+                assert!(cond.if_false.is_some());
+                assert_eq!(cond.if_false.unwrap().statements.len(), 2);
+            }
+            _ => panic!("Expected condition statement"),
+        }
     }
 
     #[test]
