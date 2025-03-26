@@ -102,11 +102,12 @@ impl Parser {
             _ => unreachable!(),
         };
 
-        self.next_token();
+        // self.next_token();
 
-        let else_block = if self.current_token.is_some()
-            && self.current_token.as_ref().expect("checked before").kind == TokenKind::Else
+        let else_block = if self.peek_token.is_some()
+            && self.peek_token.as_ref().expect("checked before").kind == TokenKind::Else
         {
+            self.next_token();
             self.next_token();
             Some(match self.parse_block_statement()? {
                 Statement::Block(block) => block,

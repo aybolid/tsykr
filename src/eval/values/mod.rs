@@ -65,6 +65,13 @@ impl Value {
         }
     }
 
+    pub fn is_returned(&self) -> bool {
+        match self {
+            Value::Returned(_) => true,
+            _ => false,
+        }
+    }
+
     pub fn rc(self) -> Rc<Self> {
         Rc::new(self)
     }

@@ -88,7 +88,7 @@ impl Eval for FunctionCall {
         }
 
         let result = callee.body.eval(local_env)?;
-        Ok(result)
+        Ok(result.unwrap_returned())
     }
 }
 

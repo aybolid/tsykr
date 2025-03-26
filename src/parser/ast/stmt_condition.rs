@@ -1,7 +1,7 @@
 use std::{cell::RefCell, rc::Rc};
 
 use crate::{
-    eval::{Eval, EvalError, ExecutionEnvironment, Value},
+    eval::{Eval, EvalError, ExecutionEnvironment, Value, TRUE, VOID},
     lexer::{Token, TokenKind},
 };
 
@@ -62,8 +62,39 @@ impl Node for ConditionStatement {
 }
 
 impl Eval for ConditionStatement {
-    fn eval(&self, _env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let bool_cond = self.condition.eval(Rc::clone(&env))?;
+
+        if !matches!(&*bool_cond, Value::Boolean(_)) {
+            return Err(EvalError::NonBooleanCondition(
+                bool_cond.to_string(),
+                self.token.position,
+            ));
+        }
+
+        if bool_cond == TRUE.rc() {
+            let local_env = ExecutionEnvironment::new_local(env);
+            let mut result = self.if_true.eval(local_env)?;
+
+            if !result.is_returned() {
+                result = VOID.rc();
+            }
+
+            return Ok(result);
+        }
+
+        if let Some(if_false) = &self.if_false {
+            let local_env = ExecutionEnvironment::new_local(env);
+            let mut result = if_false.eval(local_env)?;
+
+            if !result.is_returned() {
+                result = VOID.rc();
+            }
+
+            return Ok(result);
+        }
+
+        return Ok(VOID.rc());
     }
 }
 
@@ -84,4 +115,7 @@ mod tests {
         assert_eq!(stmt.token_literal(), token.literal());
         assert_eq!(stmt.to_string(), "if (true) {\n}");
     }
+
+    #[test]
+    fn test_condition_statement_eval() {} // TODO
 }

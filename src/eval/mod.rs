@@ -27,6 +27,8 @@ pub enum EvalError {
     NotAFunction(Position),
     #[error("Wrong number of arguments: expected {0}, got {1} at {2}")]
     WrongNumberOfArguments(usize, usize, Position),
+    #[error("Non-boolean condition: want true or false, got {0} at {1}")]
+    NonBooleanCondition(String, Position),
 }
 
 pub trait Eval {

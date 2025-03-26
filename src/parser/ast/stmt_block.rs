@@ -49,9 +49,12 @@ impl Eval for Block {
 
         for stmt in &self.statements {
             result = stmt.eval(Rc::clone(&env))?;
+            if result.is_returned() {
+                break;
+            }
         }
 
-        Ok(result.unwrap_returned())
+        Ok(result)
     }
 }
 
@@ -128,7 +131,7 @@ mod tests {
         let result = block.eval(Rc::clone(&env));
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), Value::new_integer(5));
+        assert_eq!(result.unwrap(), Value::new_returned(Value::new_integer(5)));
 
         let block = Block::new(
             Token::new(TokenKind::LeftCurly, Position(0, 0)),
@@ -144,6 +147,6 @@ mod tests {
         let result = block.eval(env);
 
         assert!(result.is_ok());
-        assert_eq!(result.unwrap(), VOID.rc());
+        assert_eq!(result.unwrap(), Value::new_integer(5));
     }
 }
