@@ -1,6 +1,8 @@
+use std::{cell::RefCell, rc::Rc};
+
 use super::{Block, Identifier, Node};
 use crate::{
-    eval::Eval,
+    eval::{Environment, Eval, EvalError, ExecutionEnvironment, Value, VOID},
     lexer::{Token, TokenKind},
 };
 
@@ -9,7 +11,7 @@ pub struct FunctionDeclaration {
     pub token: Token,
     pub identifier: Identifier,
     pub parameters: Vec<Identifier>,
-    pub body: Block,
+    pub body: Rc<Block>,
 }
 
 impl FunctionDeclaration {
@@ -24,7 +26,7 @@ impl FunctionDeclaration {
             token,
             identifier,
             parameters,
-            body,
+            body: Rc::new(body),
         }
     }
 }
@@ -62,11 +64,17 @@ impl Node for FunctionDeclaration {
 }
 
 impl Eval for FunctionDeclaration {
-    fn eval(
-        &self,
-        _env: std::rc::Rc<std::cell::RefCell<crate::eval::ExecutionEnvironment>>,
-    ) -> Result<std::rc::Rc<crate::eval::Value>, crate::eval::EvalError> {
-        todo!()
+    fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
+        let params = self
+            .parameters
+            .iter()
+            .map(|ident| ident.to_string())
+            .collect::<Vec<String>>();
+
+        let func = Value::new_function(params, Rc::clone(&self.body), Rc::clone(&env));
+        env.borrow_mut().set(self.identifier.to_string(), func);
+
+        Ok(VOID.rc())
     }
 }
 
@@ -134,5 +142,29 @@ mod tests {
             function.to_string(),
             "fn add(_a, _b) {\n  let x = 5\n  return x\n}"
         )
+    }
+
+    #[test]
+    fn test_fn_declaration_eval() {
+        let block = Block::new(Token::new(TokenKind::LeftCurly, Position(0, 0)), vec![]);
+        let params = vec![];
+        let function = FunctionDeclaration::new(
+            Token::new(TokenKind::Function, Position(0, 0)),
+            Identifier::new(Token::new(
+                TokenKind::Identifier("add".to_string()),
+                Position(0, 0),
+            )),
+            params,
+            block,
+        );
+
+        let env = ExecutionEnvironment::new_global();
+        let result = function.eval(Rc::clone(&env));
+        assert!(result.is_ok());
+        assert_eq!(result.unwrap(), VOID.rc());
+
+        let stored = env.borrow().get(&function.identifier.to_string());
+        assert!(stored.is_some());
+        assert!(matches!(&*stored.unwrap(), Value::Function(_)))
     }
 }
