@@ -49,6 +49,7 @@ impl Eval for Infixed {
         let right_value = self.right.eval(env)?;
 
         match (&*left_value, &*right_value) {
+            (Value::String(left), Value::String(right)) => eval_string_infix(left, &self.op, right),
             (Value::Integer(left), Value::Integer(right)) => {
                 eval_int_infix(*left, &self.op, *right)
             }
@@ -69,6 +70,18 @@ impl Eval for Infixed {
                 self.op.position,
             )),
         }
+    }
+}
+
+fn eval_string_infix(left: &str, op: &Token, right: &str) -> Result<Rc<Value>, EvalError> {
+    match op.kind {
+        TokenKind::Plus => Ok(Value::new_string(format!("{left}{right}"))),
+        _ => Err(EvalError::InvalidInfixOperation(
+            left.to_string(),
+            op.literal(),
+            right.to_string(),
+            op.position,
+        )),
     }
 }
 
