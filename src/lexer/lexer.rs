@@ -140,7 +140,16 @@ impl Iterator for Lexer {
             '+' => Token::new(TokenKind::Plus, token_position),
             '-' => Token::new(TokenKind::Minus, token_position),
             '*' => Token::new(TokenKind::Asterisk, token_position),
-            '/' => Token::new(TokenKind::Slash, token_position),
+            '/' => {
+                if self.peek_char_is('/') {
+                    while self.current_ch != Some('\n') || self.current_ch.is_none() {
+                        self.read_char();
+                    }
+                    return self.next();
+                } else {
+                    Token::new(TokenKind::Slash, token_position)
+                }
+            }
 
             ';' => Token::new(TokenKind::SemiColon, token_position),
             ':' => Token::new(TokenKind::Colon, token_position),
@@ -203,7 +212,8 @@ mod tests {
 
     #[test]
     fn test_smth_that_makes_sense() {
-        let input = String::from("if (true) { return 2 + 2; } else { return 3.25 - 0.25; }");
+        let input =
+            String::from("if (true) { return 2 + 2; } else { return 3.25 - 0.25; } // who cares");
         let mut lexer = Lexer::new(input);
         assert_eq!(
             lexer.next(),
