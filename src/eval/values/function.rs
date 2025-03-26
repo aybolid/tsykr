@@ -1,8 +1,8 @@
-use std::{cell::RefCell, rc::Rc};
+use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
 use crate::{eval::ExecutionEnvironment, parser::Block};
 
-#[derive(Debug, PartialEq)]
+#[derive(PartialEq)]
 pub struct Function {
     pub captured_env: Rc<RefCell<ExecutionEnvironment>>,
     pub params: Vec<String>,
@@ -20,5 +20,15 @@ impl Function {
             params,
             body,
         }
+    }
+}
+
+impl Debug for Function {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Function")
+            .field("captured_env", &self.captured_env.as_ptr())
+            .field("params", &self.params)
+            .field("body", &Rc::as_ptr(&self.body))
+            .finish()
     }
 }
