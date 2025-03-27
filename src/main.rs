@@ -27,10 +27,8 @@ fn main() -> Result<()> {
 
             match parser.parse() {
                 Ok(program) => {
-                    let result = program.eval(env);
-                    match result {
-                        Ok(v) => println!("{}", v.to_string()),
-                        Err(err) => eprintln!("Runtime error: {err}"),
+                    if let Err(err) = program.eval(env) {
+                        eprintln!("Runtime error: {err}")
                     }
                 }
                 Err(errs) => {
