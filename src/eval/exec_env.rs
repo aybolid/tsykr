@@ -1,6 +1,8 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use super::{BuiltinFunction, PrintlnBuiltin, Value};
+use crate::eval::VOID;
+
+use super::Value;
 
 #[derive(Debug, PartialEq)]
 pub enum ExecutionEnvironment {
@@ -52,8 +54,32 @@ impl GlobalEnvironment {
     }
 
     fn register_builtins(&mut self) {
-        let print = PrintlnBuiltin;
-        self.set(print.get_identifier(), Value::new_builtin(Box::new(print)));
+        self.set(
+            "println".to_string(),
+            Value::new_builtin(|args| {
+                println!(
+                    "{}",
+                    args.iter()
+                        .map(|arg| arg.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                );
+                Ok(VOID.rc())
+            }),
+        );
+        self.set(
+            "print".to_string(),
+            Value::new_builtin(|args| {
+                print!(
+                    "{}",
+                    args.iter()
+                        .map(|arg| arg.to_string())
+                        .collect::<Vec<String>>()
+                        .join(" ")
+                );
+                Ok(VOID.rc())
+            }),
+        );
     }
 }
 

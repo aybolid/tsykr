@@ -2,17 +2,17 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::parser::Block;
 
-mod builtin;
 mod function;
 
-pub use builtin::*;
 pub use function::*;
 
-use super::ExecutionEnvironment;
+use super::{EvalError, ExecutionEnvironment};
 
 pub const VOID: Value = Value::VOID;
 pub const TRUE: Value = Value::Boolean(true);
 pub const FALSE: Value = Value::Boolean(false);
+
+type BuiltinFn = fn(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError>;
 
 #[derive(Debug, PartialEq)]
 pub enum Value {
@@ -22,7 +22,7 @@ pub enum Value {
     Function(Function),
     String(String),
 
-    Builtin(Box<dyn BuiltinFunction>),
+    Builtin(BuiltinFn),
 
     Returned(Rc<Value>),
 
@@ -30,7 +30,7 @@ pub enum Value {
 }
 
 impl Value {
-    pub fn new_builtin(value: Box<dyn BuiltinFunction>) -> Rc<Self> {
+    pub fn new_builtin(value: BuiltinFn) -> Rc<Self> {
         Rc::new(Value::Builtin(value))
     }
     pub fn new_string(value: String) -> Rc<Self> {
