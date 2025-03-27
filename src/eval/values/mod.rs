@@ -83,6 +83,10 @@ impl Value {
         }
     }
 
+    pub fn is_string(&self) -> bool {
+        matches!(self, Value::String(_))
+    }
+
     pub fn rc(self) -> Rc<Self> {
         Rc::new(self)
     }
