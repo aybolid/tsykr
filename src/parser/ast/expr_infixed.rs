@@ -76,6 +76,8 @@ impl Eval for Infixed {
 fn eval_string_infix(left: &str, op: &Token, right: &str) -> Result<Rc<Value>, EvalError> {
     match op.kind {
         TokenKind::Plus => Ok(Value::new_string(format!("{left}{right}"))),
+        TokenKind::EqualsEquals => Ok(Value::from_native_bool(left == right)),
+        TokenKind::BangEquals => Ok(Value::from_native_bool(left != right)),
         _ => Err(EvalError::InvalidInfixOperation(
             left.to_string(),
             op.literal(),
