@@ -12,7 +12,7 @@ pub const VOID: Value = Value::VOID;
 pub const TRUE: Value = Value::Boolean(true);
 pub const FALSE: Value = Value::Boolean(false);
 
-type BuiltinFn = fn(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError>;
+pub type BuiltinFn = fn(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError>;
 
 #[derive(Debug, PartialEq)]
 pub enum Value {

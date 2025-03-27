@@ -1,8 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::eval::VOID;
-
-use super::Value;
+use super::{builtins, Value};
 
 #[derive(Debug, PartialEq)]
 pub enum ExecutionEnvironment {
@@ -13,9 +11,9 @@ pub enum ExecutionEnvironment {
 
 impl ExecutionEnvironment {
     pub fn new_global() -> Rc<RefCell<Self>> {
-        let mut env = GlobalEnvironment::new();
-        env.register_builtins();
-        Rc::new(RefCell::new(ExecutionEnvironment::Global(env)))
+        Rc::new(RefCell::new(ExecutionEnvironment::Global(
+            GlobalEnvironment::new(),
+        )))
     }
 
     pub fn new_local(parent: Rc<RefCell<ExecutionEnvironment>>) -> Rc<RefCell<Self>> {
@@ -48,38 +46,11 @@ pub struct GlobalEnvironment {
 
 impl GlobalEnvironment {
     pub fn new() -> Self {
-        GlobalEnvironment {
+        let mut env = GlobalEnvironment {
             store: HashMap::new(),
-        }
-    }
-
-    fn register_builtins(&mut self) {
-        self.set(
-            "println".to_string(),
-            Value::new_builtin(|args| {
-                println!(
-                    "{}",
-                    args.iter()
-                        .map(|arg| arg.to_string())
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                );
-                Ok(VOID.rc())
-            }),
-        );
-        self.set(
-            "print".to_string(),
-            Value::new_builtin(|args| {
-                print!(
-                    "{}",
-                    args.iter()
-                        .map(|arg| arg.to_string())
-                        .collect::<Vec<String>>()
-                        .join(" ")
-                );
-                Ok(VOID.rc())
-            }),
-        );
+        };
+        builtins::register_builtins(&mut env);
+        env
     }
 }
 
