@@ -2,8 +2,10 @@ use std::{cell::RefCell, rc::Rc};
 
 use crate::parser::Block;
 
+mod builtin;
 mod function;
 
+pub use builtin::*;
 pub use function::*;
 
 use super::ExecutionEnvironment;
@@ -20,12 +22,17 @@ pub enum Value {
     Function(Function),
     String(String),
 
+    Builtin(Box<dyn BuiltinFunction>),
+
     Returned(Rc<Value>),
 
     VOID,
 }
 
 impl Value {
+    pub fn new_builtin(value: Box<dyn BuiltinFunction>) -> Rc<Self> {
+        Rc::new(Value::Builtin(value))
+    }
     pub fn new_string(value: String) -> Rc<Self> {
         Rc::new(Value::String(value))
     }
@@ -93,6 +100,7 @@ impl ToString for Value {
             Value::Function(func) => {
                 format!("fn({})", func.params.join(", "))
             }
+            Value::Builtin(_) => "builtin".to_string(),
         }
     }
 }

@@ -1,6 +1,6 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use super::Value;
+use super::{BuiltinFunction, PrintlnBuiltin, Value};
 
 #[derive(Debug, PartialEq)]
 pub enum ExecutionEnvironment {
@@ -11,9 +11,9 @@ pub enum ExecutionEnvironment {
 
 impl ExecutionEnvironment {
     pub fn new_global() -> Rc<RefCell<Self>> {
-        Rc::new(RefCell::new(ExecutionEnvironment::Global(
-            GlobalEnvironment::new(),
-        )))
+        let mut env = GlobalEnvironment::new();
+        env.register_builtins();
+        Rc::new(RefCell::new(ExecutionEnvironment::Global(env)))
     }
 
     pub fn new_local(parent: Rc<RefCell<ExecutionEnvironment>>) -> Rc<RefCell<Self>> {
@@ -49,6 +49,11 @@ impl GlobalEnvironment {
         GlobalEnvironment {
             store: HashMap::new(),
         }
+    }
+
+    fn register_builtins(&mut self) {
+        let print = PrintlnBuiltin;
+        self.set(print.get_identifier(), Value::new_builtin(Box::new(print)));
     }
 }
 

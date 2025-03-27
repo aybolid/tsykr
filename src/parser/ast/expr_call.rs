@@ -60,11 +60,6 @@ impl Eval for FunctionCall {
     fn eval(&self, env: Rc<RefCell<ExecutionEnvironment>>) -> Result<Rc<Value>, EvalError> {
         let func = self.function.eval(Rc::clone(&env))?;
 
-        let callee = match &*func {
-            Value::Function(f) => f,
-            _ => return Err(EvalError::NotAFunction(self.token.position)),
-        };
-
         let mut args = vec![];
         for arg in &self.arguments {
             let arg_value = arg.eval(Rc::clone(&env))?;
@@ -73,6 +68,12 @@ impl Eval for FunctionCall {
             }
             args.push(arg_value);
         }
+
+        let callee = match &*func {
+            Value::Function(f) => f,
+            Value::Builtin(builtin) => return builtin.call(args),
+            _ => return Err(EvalError::NotAFunction(self.token.position)),
+        };
 
         if args.len() != callee.params.len() {
             return Err(EvalError::WrongNumberOfArguments(
