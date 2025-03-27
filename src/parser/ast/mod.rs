@@ -8,6 +8,7 @@ mod expr_integer;
 mod expr_prefixed;
 mod expr_string;
 mod program;
+mod stmt_assign;
 mod stmt_block;
 mod stmt_condition;
 mod stmt_expr;
@@ -27,6 +28,7 @@ pub use expr_integer::*;
 pub use expr_prefixed::*;
 pub use expr_string::*;
 pub use program::*;
+pub use stmt_assign::*;
 pub use stmt_block::*;
 pub use stmt_condition::*;
 pub use stmt_expr::*;
@@ -59,9 +61,13 @@ pub enum Statement {
     ReturnStatement(ReturnStatement),
     FunctionDeclaration(FunctionDeclaration),
     Condition(ConditionStatement),
+    Assign(AssignStatement),
 }
 
 impl Statement {
+    pub fn new_assign(ident: Identifier, value: Box<Expression>) -> Self {
+        Statement::Assign(AssignStatement::new(ident, value))
+    }
     pub fn new_block(token: Token, statements: Vec<Box<Statement>>) -> Self {
         Statement::Block(Block::new(token, statements))
     }
@@ -106,6 +112,7 @@ impl Eval for Statement {
             Statement::ReturnStatement(return_stmt) => return_stmt.eval(env),
             Statement::FunctionDeclaration(func_decl) => func_decl.eval(env),
             Statement::Condition(condition) => condition.eval(env),
+            Statement::Assign(assign_stmt) => assign_stmt.eval(env),
         }
     }
 }
@@ -119,6 +126,7 @@ impl Node for Statement {
             Statement::ReturnStatement(return_stmt) => return_stmt.token_literal(),
             Statement::FunctionDeclaration(func_decl) => func_decl.token_literal(),
             Statement::Condition(condition) => condition.token_literal(),
+            Statement::Assign(assign_stmt) => assign_stmt.token_literal(),
         }
     }
 
@@ -130,6 +138,7 @@ impl Node for Statement {
             Statement::ReturnStatement(return_stmt) => return_stmt,
             Statement::FunctionDeclaration(func_decl) => func_decl,
             Statement::Condition(condition) => condition,
+            Statement::Assign(assign_stmt) => assign_stmt,
         }
     }
 }
@@ -143,6 +152,7 @@ impl ToString for Statement {
             Statement::ReturnStatement(return_stmt) => return_stmt.to_string(),
             Statement::FunctionDeclaration(func_decl) => func_decl.to_string(),
             Statement::Condition(condition) => condition.to_string(),
+            Statement::Assign(assign_stmt) => assign_stmt.to_string(),
         }
     }
 }

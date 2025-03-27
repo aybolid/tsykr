@@ -21,6 +21,52 @@ impl ExecutionEnvironment {
             LocalEnvironment::new(parent),
         )))
     }
+
+    pub fn assign(&mut self, name: &str, value: Rc<Value>) -> bool {
+        match self {
+            ExecutionEnvironment::Global(env) => {
+                if env.store.contains_key(name) {
+                    env.store.insert(name.to_string(), value);
+                    true
+                } else {
+                    false
+                }
+            }
+            ExecutionEnvironment::Local(env) => {
+                if env.store.contains_key(name) {
+                    env.store.insert(name.to_string(), value);
+                    return true;
+                }
+
+                fn find_and_assign(
+                    current_env: &mut Rc<RefCell<ExecutionEnvironment>>,
+                    name: &str,
+                    value: Rc<Value>,
+                ) -> bool {
+                    match &mut *current_env.borrow_mut() {
+                        ExecutionEnvironment::Global(global_env) => {
+                            if global_env.store.contains_key(name) {
+                                global_env.store.insert(name.to_string(), value);
+                                true
+                            } else {
+                                false
+                            }
+                        }
+                        ExecutionEnvironment::Local(local_env) => {
+                            if local_env.store.contains_key(name) {
+                                local_env.store.insert(name.to_string(), value);
+                                return true;
+                            }
+
+                            find_and_assign(&mut local_env.parent, name, value)
+                        }
+                    }
+                }
+
+                find_and_assign(&mut env.parent, name, value)
+            }
+        }
+    }
 }
 
 impl Environment for ExecutionEnvironment {
@@ -67,7 +113,7 @@ impl Environment for GlobalEnvironment {
 #[derive(Debug, PartialEq)]
 pub struct LocalEnvironment {
     store: HashMap<String, Rc<Value>>,
-    parent: Rc<RefCell<ExecutionEnvironment>>,
+    pub parent: Rc<RefCell<ExecutionEnvironment>>,
 }
 
 impl LocalEnvironment {

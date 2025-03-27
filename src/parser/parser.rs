@@ -70,6 +70,8 @@ impl Parser {
             match token.kind {
                 TokenKind::Let => Ok(Box::new(self.parse_let_statement()?)),
                 TokenKind::Return => Ok(Box::new(self.parse_return_statement()?)),
+                TokenKind::If => Ok(Box::new(self.parse_condition_statement()?)),
+
                 TokenKind::Function
                     if self.peek_token.is_some()
                         && matches!(
@@ -79,7 +81,14 @@ impl Parser {
                 {
                     Ok(Box::new(self.parse_function_declaration_statement()?))
                 }
-                TokenKind::If => Ok(Box::new(self.parse_condition_statement()?)),
+
+                TokenKind::Identifier(_)
+                    if self.peek_token.is_some()
+                        && self.peek_token.as_ref().expect("checked before").kind
+                            == TokenKind::Equals =>
+                {
+                    Ok(Box::new(self.parse_assign_statement()?))
+                }
 
                 TokenKind::ILLEGAL(_) => Err(ParserError::InvalidToken(token.clone())),
                 _ => Ok(Box::new(self.parse_expression_statement()?)),
@@ -87,6 +96,33 @@ impl Parser {
         } else {
             Err(ParserError::UnexpectedEOF)
         }
+    }
+
+    fn parse_assign_statement(&mut self) -> Result<Statement, ParserError> {
+        let identifier = match self.parse_identifier() {
+            Ok(identifier) => match identifier {
+                Expression::Identifier(identifier) => identifier,
+                _ => unreachable!(),
+            },
+            Err(err) => return Err(err),
+        };
+        self.next_token();
+
+        self.expect_token_kind(&self.current_token, TokenKind::Equals)?;
+        self.next_token();
+
+        let value = self.parse_expression(Precedence::Lowest)?;
+
+        if self
+            .peek_token
+            .as_ref()
+            .map(|t| t.kind == TokenKind::SemiColon)
+            .unwrap_or(false)
+        {
+            self.next_token();
+        }
+
+        Ok(Statement::new_assign(identifier, value))
     }
 
     fn parse_condition_statement(&mut self) -> Result<Statement, ParserError> {
@@ -571,6 +607,26 @@ mod parser_tests {
         let mut parser = Parser::new(lexer);
         let program = parser.parse()?;
         Ok(program.statements.into_iter().next().unwrap())
+    }
+
+    #[test]
+    fn test_assign_statement() {
+        let input = "x = 5;";
+        let statement = parse_first_statement(input).unwrap();
+
+        match *statement {
+            Statement::Assign(assign_stmt) => {
+                assert_eq!(assign_stmt.identifier.token.literal(), "x");
+
+                match assign_stmt.value.as_ref() {
+                    Expression::Integer(int_expr) => {
+                        assert_eq!(int_expr.token.literal(), "5");
+                    }
+                    _ => panic!("Expected integer expression"),
+                }
+            }
+            _ => panic!("Expected assign statement"),
+        }
     }
 
     #[test]
