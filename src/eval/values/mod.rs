@@ -1,6 +1,6 @@
 use std::{cell::RefCell, rc::Rc};
 
-use crate::parser::Block;
+use crate::{lexer::Position, parser::Block};
 
 mod function;
 
@@ -12,7 +12,7 @@ pub const VOID: Value = Value::VOID;
 pub const TRUE: Value = Value::Boolean(true);
 pub const FALSE: Value = Value::Boolean(false);
 
-pub type BuiltinFn = fn(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError>;
+pub type BuiltinFn = fn(args: Vec<Rc<Value>>, pos: Position) -> Result<Rc<Value>, EvalError>;
 
 #[derive(Debug, PartialEq)]
 pub enum Value {

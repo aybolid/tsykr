@@ -71,7 +71,7 @@ impl Eval for FunctionCall {
 
         let callee = match &*func {
             Value::Function(f) => f,
-            Value::Builtin(builtin) => return builtin(args),
+            Value::Builtin(builtin) => return builtin(args, self.token.position),
             _ => return Err(EvalError::NotAFunction(self.token.position)),
         };
 

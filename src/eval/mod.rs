@@ -30,10 +30,11 @@ pub enum EvalError {
     WrongNumberOfArguments(usize, usize, Position),
     #[error("Non-boolean condition: want true or false, got {0} at {1}")]
     NonBooleanCondition(String, Position),
-    #[error("Wrong number of arguments: {0}: expected: {1}, got {2}")]
-    BuiltinWrongNumberOfArguments(String, usize, usize),
-    #[error("Type mismatch: {0}: expected: {1}, got {2}")]
-    BuiltinWrongArgumentType(String, String, String),
+
+    #[error("Wrong number of arguments: {0}: expected: {1}, got {2} at {3}")]
+    BuiltinWrongNumberOfArguments(String, usize, usize, Position),
+    #[error("Type mismatch: {0}: expected: {1}, got {2} at {3}")]
+    BuiltinWrongArgumentType(String, String, String, Position),
 }
 
 pub trait Eval {

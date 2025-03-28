@@ -1,8 +1,11 @@
 use std::rc::Rc;
 
-use crate::eval::{EvalError, Value, VOID};
+use crate::{
+    eval::{EvalError, Value, VOID},
+    lexer::Position,
+};
 
-pub fn print(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError> {
+pub fn print(args: Vec<Rc<Value>>, _pos: Position) -> Result<Rc<Value>, EvalError> {
     print!(
         "{}",
         &args
@@ -15,7 +18,7 @@ pub fn print(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError> {
     Ok(VOID.rc())
 }
 
-pub fn println(args: Vec<Rc<Value>>) -> Result<Rc<Value>, EvalError> {
+pub fn println(args: Vec<Rc<Value>>, _pos: Position) -> Result<Rc<Value>, EvalError> {
     println!(
         "{}",
         &args
