@@ -21,6 +21,7 @@ pub enum Value {
     Boolean(bool),
     Function(Function),
     String(String),
+    Array(Vec<Rc<Value>>),
 
     Builtin(BuiltinFn),
 
@@ -51,6 +52,9 @@ impl Value {
         env: Rc<RefCell<ExecutionEnvironment>>,
     ) -> Rc<Self> {
         Rc::new(Value::Function(Function::new(params, body, env)))
+    }
+    pub fn new_array(els: Vec<Rc<Value>>) -> Rc<Self> {
+        Rc::new(Value::Array(els))
     }
 
     pub fn from_native_bool(value: bool) -> Rc<Self> {
@@ -86,6 +90,9 @@ impl Value {
     pub fn is_string(&self) -> bool {
         matches!(self, Value::String(_))
     }
+    pub fn is_array(&self) -> bool {
+        matches!(self, Value::Array(_))
+    }
 
     pub fn rc(self) -> Rc<Self> {
         Rc::new(self)
@@ -105,6 +112,16 @@ impl ToString for Value {
                 format!("fn({})", func.params.join(", "))
             }
             Value::Builtin(_) => "builtin".to_string(),
+            Value::Array(array) => {
+                format!(
+                    "[{}]",
+                    array
+                        .iter()
+                        .map(|el| el.to_string())
+                        .collect::<Vec<String>>()
+                        .join(", ")
+                )
+            }
         }
     }
 }

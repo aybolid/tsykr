@@ -15,7 +15,7 @@ pub fn length(args: Vec<Rc<Value>>, pos: Position) -> Result<Rc<Value>, EvalErro
         ));
     }
 
-    if !args[0].is_string() {
+    if !args[0].is_string() && !args[0].is_array() {
         return Err(EvalError::BuiltinWrongArgumentType(
             "len".to_string(),
             "String or Array".to_string(),
@@ -26,6 +26,7 @@ pub fn length(args: Vec<Rc<Value>>, pos: Position) -> Result<Rc<Value>, EvalErro
 
     match &*args[0] {
         Value::String(str) => Ok(Value::new_integer(str.len() as i64)),
+        Value::Array(arr) => Ok(Value::new_integer(arr.len() as i64)),
         _ => unreachable!(),
     }
 }

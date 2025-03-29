@@ -1,3 +1,4 @@
+mod expr_array;
 mod expr_boolean;
 mod expr_call;
 mod expr_float;
@@ -18,6 +19,7 @@ mod stmt_return;
 
 use std::{cell::RefCell, fmt::Debug, rc::Rc};
 
+pub use expr_array::*;
 pub use expr_boolean::*;
 pub use expr_call::*;
 pub use expr_float::*;
@@ -168,6 +170,7 @@ pub enum Expression {
     Integer(Integer),
     Prefixed(Prefixed),
     String(StringLiteral),
+    Array(Array),
 }
 
 impl Expression {
@@ -202,6 +205,9 @@ impl Expression {
     pub fn new_string(token: Token) -> Self {
         Expression::String(StringLiteral::new(token))
     }
+    pub fn new_array(token: Token, els: Vec<Box<Expression>>) -> Self {
+        Expression::Array(Array::new(token, els))
+    }
 }
 
 impl Eval for Expression {
@@ -216,6 +222,7 @@ impl Eval for Expression {
             Expression::Integer(int) => int.eval(env),
             Expression::Prefixed(prefix) => prefix.eval(env),
             Expression::String(string) => string.eval(env),
+            Expression::Array(arr) => arr.eval(env),
         }
     }
 }
@@ -232,6 +239,7 @@ impl Node for Expression {
             Expression::Integer(int) => int.token_literal(),
             Expression::Prefixed(prefix) => prefix.token_literal(),
             Expression::String(string) => string.token_literal(),
+            Expression::Array(arr) => arr.token_literal(),
         }
     }
 
@@ -246,6 +254,7 @@ impl Node for Expression {
             Expression::Integer(int) => int,
             Expression::Prefixed(prefix) => prefix,
             Expression::String(string) => string,
+            Expression::Array(arr) => arr,
         }
     }
 }
@@ -262,6 +271,7 @@ impl ToString for Expression {
             Expression::Integer(int) => int.to_string(),
             Expression::Prefixed(prefix) => prefix.to_string(),
             Expression::String(string) => string.to_string(),
+            Expression::Array(arr) => arr.to_string(),
         }
     }
 }

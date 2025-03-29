@@ -299,6 +299,7 @@ impl Parser {
                 TokenKind::Bang | TokenKind::Minus => Box::new(self.parse_prefixed_expression()?),
                 TokenKind::Function => Box::new(self.parse_function_expression()?),
                 TokenKind::String(_) => Box::new(self.parse_string_literal()?),
+                TokenKind::LeftBracket => Box::new(self.parse_array_literal()?),
 
                 TokenKind::LeftParen => self.parse_grouped_expression()?,
 
@@ -336,6 +337,14 @@ impl Parser {
         }
 
         Ok(expr)
+    }
+
+    fn parse_array_literal(&mut self) -> Result<Expression, ParserError> {
+        self.expect_token_kind(&self.current_token, TokenKind::LeftBracket)?;
+        let arr_token = self.current_token.take().expect("checked before");
+        let els = self.parse_expression_list(TokenKind::RightBracket)?;
+
+        Ok(Expression::new_array(arr_token, els))
     }
 
     /// Parser a string literal
@@ -722,6 +731,23 @@ mod parser_tests {
                     assert_eq!(ident.token.literal(), "foobar");
                 }
                 _ => panic!("Expected identifier expression"),
+            },
+            _ => panic!("Expected expression statement"),
+        }
+    }
+
+    #[test]
+    fn test_array_literal_expression() {
+        let input = "[1,2];";
+        let statement = parse_first_statement(input).unwrap();
+
+        match *statement {
+            Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::Array(arr) => {
+                    assert_eq!(arr.token.literal(), "[");
+                    assert_eq!(arr.elements.len(), 2);
+                }
+                _ => panic!("Expected array expression"),
             },
             _ => panic!("Expected expression statement"),
         }
