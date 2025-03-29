@@ -79,14 +79,12 @@ impl Value {
             _ => false,
         }
     }
-
     pub fn is_returned(&self) -> bool {
         match self {
             Value::Returned(_) => true,
             _ => false,
         }
     }
-
     pub fn is_string(&self) -> bool {
         matches!(self, Value::String(_))
     }

@@ -4,6 +4,7 @@ mod expr_call;
 mod expr_float;
 mod expr_function;
 mod expr_identifier;
+mod expr_index;
 mod expr_infixed;
 mod expr_integer;
 mod expr_prefixed;
@@ -25,6 +26,7 @@ pub use expr_call::*;
 pub use expr_float::*;
 pub use expr_function::*;
 pub use expr_identifier::*;
+pub use expr_index::*;
 pub use expr_infixed::*;
 pub use expr_integer::*;
 pub use expr_prefixed::*;
@@ -171,6 +173,7 @@ pub enum Expression {
     Prefixed(Prefixed),
     String(StringLiteral),
     Array(Array),
+    Index(Index),
 }
 
 impl Expression {
@@ -208,6 +211,9 @@ impl Expression {
     pub fn new_array(token: Token, els: Vec<Box<Expression>>) -> Self {
         Expression::Array(Array::new(token, els))
     }
+    pub fn new_index(token: Token, of: Box<Expression>, index: Box<Expression>) -> Self {
+        Expression::Index(Index::new(token, of, index))
+    }
 }
 
 impl Eval for Expression {
@@ -223,6 +229,7 @@ impl Eval for Expression {
             Expression::Prefixed(prefix) => prefix.eval(env),
             Expression::String(string) => string.eval(env),
             Expression::Array(arr) => arr.eval(env),
+            Expression::Index(idx) => idx.eval(env),
         }
     }
 }
@@ -240,6 +247,7 @@ impl Node for Expression {
             Expression::Prefixed(prefix) => prefix.token_literal(),
             Expression::String(string) => string.token_literal(),
             Expression::Array(arr) => arr.token_literal(),
+            Expression::Index(idx) => idx.token_literal(),
         }
     }
 
@@ -255,6 +263,7 @@ impl Node for Expression {
             Expression::Prefixed(prefix) => prefix,
             Expression::String(string) => string,
             Expression::Array(arr) => arr,
+            Expression::Index(idx) => idx,
         }
     }
 }
@@ -272,6 +281,7 @@ impl ToString for Expression {
             Expression::Prefixed(prefix) => prefix.to_string(),
             Expression::String(string) => string.to_string(),
             Expression::Array(arr) => arr.to_string(),
+            Expression::Index(idx) => idx.to_string(),
         }
     }
 }

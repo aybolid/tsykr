@@ -20,6 +20,8 @@ pub enum EvalError {
     InvalidPrefixOperation(String, String, Position),
     #[error("Invalid infix operation: {0}{1}{2} at {3}")]
     InvalidInfixOperation(String, String, String, Position),
+    #[error("Invalid index: {0}[{1}] at {2}")]
+    InvalidIndexExpression(String, String, Position),
     #[error("Division by zero: {0}/{1} at {2}")]
     DivisionByZero(String, String, Position),
     #[error("Void as an function argument at {0}")]
@@ -30,6 +32,8 @@ pub enum EvalError {
     WrongNumberOfArguments(usize, usize, Position),
     #[error("Non-boolean condition: want true or false, got {0} at {1}")]
     NonBooleanCondition(String, Position),
+    #[error("Index out of bounds: index {0}, while length {1} at {2}")]
+    IndexOutOfBounds(usize, usize, Position),
 
     #[error("Wrong number of arguments: {0}: expected: {1}, got {2} at {3}")]
     BuiltinWrongNumberOfArguments(String, usize, usize, Position),

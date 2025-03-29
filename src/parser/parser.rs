@@ -332,6 +332,10 @@ impl Parser {
                     self.next_token();
                     expr = Box::new(self.parse_function_call(expr)?);
                 }
+                TokenKind::LeftBracket => {
+                    self.next_token();
+                    expr = Box::new(self.parse_index_expression(expr)?)
+                }
                 _ => return Ok(expr),
             };
         }
@@ -356,6 +360,21 @@ impl Parser {
         Ok(Expression::new_string(
             self.current_token.take().expect("checked before"),
         ))
+    }
+
+    fn parse_index_expression(
+        &mut self,
+        index_of: Box<Expression>,
+    ) -> Result<Expression, ParserError> {
+        self.expect_token_kind(&self.current_token, TokenKind::LeftBracket)?;
+        let index_token = self.current_token.take().expect("checked before");
+        self.next_token();
+        let index = self.parse_expression(Precedence::Lowest)?;
+        self.next_token();
+        self.expect_token_kind(&self.current_token, TokenKind::RightBracket)?;
+        self.next_token();
+
+        Ok(Expression::new_index(index_token, index_of, index))
     }
 
     /// Parses a function call expression.
@@ -639,11 +658,25 @@ mod parser_tests {
     }
 
     #[test]
+    fn test_string_index_expression() {
+        let input = "[1,2,3][1];";
+        let statement = parse_first_statement(input).unwrap();
+
+        match *statement {
+            Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
+                Expression::Index(idx_expr) => {
+                    assert_eq!(idx_expr.token.kind, TokenKind::LeftBracket);
+                }
+                _ => panic!("Expected index expression"),
+            },
+            _ => panic!("Expected expression statement"),
+        }
+    }
+
+    #[test]
     fn test_string_literal_expression() {
         let input = "\"what\";";
         let statement = parse_first_statement(input).unwrap();
-
-        println!("{statement:?}");
 
         match *statement {
             Statement::ExpressionStatement(expr_stmt) => match expr_stmt.expression.as_ref() {
