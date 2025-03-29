@@ -6,7 +6,7 @@ use crate::{
     parser::Parser,
 };
 
-const PROMPT: &str = ">> ";
+const PROMPT: &str = "> ";
 
 /// Run the REPL. Yoohoo!!!
 pub fn run() {
@@ -46,12 +46,12 @@ pub fn run() {
             Ok(program) => match program.eval(Rc::clone(&env)) {
                 Ok(value) => {
                     if debug_print {
-                        println!("   {:?}", value)
+                        println!("{:?}", value)
                     } else {
-                        println!("   {}", value.to_string())
+                        println!("{}", value.to_string())
                     }
                 }
-                Err(err) => eprintln!("   Evaluation error: {err}"),
+                Err(err) => eprintln!("Evaluation error: {err}"),
             },
             Err(errs) => {
                 eprintln!("Parser errors:");
